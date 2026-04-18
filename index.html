@@ -465,11 +465,17 @@ let S={
   scores:{},      // `${hole}-${pid}` → gross int
   greenies:{},    // `${hole}` → pid (closest) or null
   presses:[],     // {id,match,seg,startHole,parentId}
-  // 9 Point Game state
-  ninePlayers:[], // 3 player ids selected for 9pt game
+  // 9 Point Game state — completely independent of Wheel
+  nineRoster:[
+    {id:'P1',name:'',hdcp:0},
+    {id:'P2',name:'',hdcp:0},
+    {id:'P3',name:'',hdcp:0},
+  ],
+  ninePlayers:['P1','P2','P3'], // always all 3
   nineNine:'front',
   ninePresses:{}, // pid → hole# they pressed on (or null)
   nineGreenies:{},// hole → pid (closest) — separate from wheel greenies
+  nineScores:{},  // `${hole}-${pid}` → gross int, independent of wheel scores
 };
 
 function save(){try{localStorage.setItem('wheel-s',JSON.stringify(S));}catch(e){}}
@@ -1225,87 +1231,95 @@ function renderLedger(){
 // ══════════════════════════════════════════
 
 // ── Setup ──
+function npName(id){return S.nineRoster.find(p=>p.id===id)?.name||id;}
+function npHdcp(id){return S.nineRoster.find(p=>p.id===id)?.hdcp||0;}
+
 function initNineSetup(){
   const body=document.getElementById('nine-setup-body');
   body.innerHTML='';
 
-  const lbl1=document.createElement('div');lbl1.className='slabel';lbl1.style.marginTop='0';lbl1.textContent='Select 3 players';
+  const today=new Date().toISOString().split('T')[0];
+
+  const lbl0=document.createElement('div');lbl0.className='slabel';lbl0.style.marginTop='0';lbl0.textContent='Date';
+  body.appendChild(lbl0);
+  const dateInp=document.createElement('input');
+  dateInp.type='date';dateInp.className='inp';dateInp.value=S.date||today;
+  dateInp.oninput=()=>{S.date=dateInp.value;save();};
+  body.appendChild(dateInp);
+
+  const lbl1=document.createElement('div');lbl1.className='slabel';lbl1.textContent='Tees';
   body.appendChild(lbl1);
+  const tw=document.createElement('div');tw.className='tee-wrap';
+  TEES.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='tbtn'+(S.tee===t.name?' on':'');
+    b.innerHTML=`<span class="tdot" style="background:${t.color}"></span>${t.name} <span style="color:var(--txd);font-size:11px">${t.yards.toLocaleString()}y</span>`;
+    b.onclick=()=>{S.tee=t.name;save();initNineSetup();};
+    tw.appendChild(b);
+  });
+  body.appendChild(tw);
 
-  const hint=document.createElement('div');hint.className='hint';hint.style.marginBottom='12px';
-  hint.textContent='Choose any 3 players — independent of Wheel rosters';
-  body.appendChild(hint);
+  const lbl2=document.createElement('div');lbl2.className='slabel';lbl2.textContent='Players';
+  body.appendChild(lbl2);
 
-  const allIds=['W1','W2','A','B','C'];
   const card=document.createElement('div');card.className='card';
-  allIds.forEach((id,i)=>{
-    const p=S.players.find(x=>x.id===id);
-    const row=document.createElement('div');
-    row.className='card-row';
-    if(i===allIds.length-1)row.style.borderBottom='none';
-    const sel=S.ninePlayers.includes(id);
-    row.innerHTML=`
-      <div class="badge ${id.startsWith('W')?'bw':'bo'}">${id}</div>
-      <div style="flex:1;font-size:14px;color:var(--tx)">${p.name||id}</div>
-      <div style="font-size:12px;color:var(--txm);margin-right:10px">Hdcp ${p.hdcp||0}</div>
-      <div style="width:22px;height:22px;border-radius:6px;border:2px solid ${sel?'var(--amberl)':'var(--bd)'};background:${sel?'var(--amber)':'transparent'};display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;flex-shrink:0" id="np-chk-${id}">${sel?'✓':''}</div>`;
-    row.onclick=()=>toggleNinePlayer(id);
+  ['P1','P2','P3'].forEach((id,i)=>{
+    const p=S.nineRoster.find(x=>x.id===id);
+    const row=document.createElement('div');row.className='card-row';
+    if(i===2)row.style.borderBottom='none';
+    const badge=document.createElement('div');
+    badge.className='badge';
+    badge.style.cssText='background:rgba(184,134,11,.2);color:var(--amberl);border:1px solid rgba(184,134,11,.35)';
+    badge.textContent=`P${i+1}`;
+    const inputs=document.createElement('div');inputs.className='pinputs';
+    const nameInp=document.createElement('input');
+    nameInp.className='inp';nameInp.type='text';nameInp.placeholder=`Player ${i+1} name`;
+    nameInp.value=p.name||'';
+    nameInp.oninput=()=>{p.name=nameInp.value;save();};
+    const hdcpInp=document.createElement('input');
+    hdcpInp.className='inp inp-sm';hdcpInp.type='number';hdcpInp.min=0;hdcpInp.max=54;hdcpInp.placeholder='Hdcp';
+    hdcpInp.value=p.hdcp||'';
+    hdcpInp.oninput=()=>{p.hdcp=+hdcpInp.value||0;save();};
+    inputs.append(nameInp,hdcpInp);
+    row.append(badge,inputs);
     card.appendChild(row);
   });
   body.appendChild(card);
 
-  const lbl2=document.createElement('div');lbl2.className='slabel';lbl2.textContent='Selected';
-  body.appendChild(lbl2);
-  const selDiv=document.createElement('div');selDiv.id='nine-selected-display';
-  selDiv.style.cssText='font-size:14px;color:var(--amberl);margin-bottom:16px;min-height:20px';
-  selDiv.textContent=S.ninePlayers.length?S.ninePlayers.map(id=>pName(id)).join(', '):'Pick 3 players above';
-  body.appendChild(selDiv);
-
   const startBtn=document.createElement('button');
   startBtn.className='startbtn';
-  startBtn.style.cssText='background:rgba(184,134,11,.3);border:1px solid rgba(184,134,11,.5)';
+  startBtn.style.cssText='background:rgba(184,134,11,.3);border:1px solid rgba(184,134,11,.5);margin-top:20px';
   startBtn.textContent='Start 9 Point Game →';
   startBtn.onclick=startNineGame;
   body.appendChild(startBtn);
   const spacer=document.createElement('div');spacer.style.height='24px';body.appendChild(spacer);
 }
 
-function toggleNinePlayer(id){
-  const idx=S.ninePlayers.indexOf(id);
-  if(idx>=0){S.ninePlayers.splice(idx,1);}
-  else if(S.ninePlayers.length<3){S.ninePlayers.push(id);}
-  save();
-  // Refresh checkboxes
-  ['W1','W2','A','B','C'].forEach(pid=>{
-    const el=document.getElementById(`np-chk-${pid}`);
-    if(!el)return;
-    const sel=S.ninePlayers.includes(pid);
-    el.style.borderColor=sel?'var(--amberl)':'var(--bd)';
-    el.style.background=sel?'var(--amber)':'transparent';
-    el.textContent=sel?'✓':'';
-  });
-  const disp=document.getElementById('nine-selected-display');
-  if(disp)disp.textContent=S.ninePlayers.length?S.ninePlayers.map(id=>pName(id)).join(', '):'Pick 3 players above';
-}
-
 function startNineGame(){
-  if(S.ninePlayers.length!==3){showToast('Pick exactly 3 players first');return;}
+  S.ninePlayers=['P1','P2','P3'];
   S.nineNine='front';
   S.ninePresses={};
   S.nineGreenies={};
+  S.nineScores={};
   save();
   go('nine');
 }
 
 // ── Scoring helpers ──
+function nineGetScore(hole,pid){return S.nineScores?.[`${hole}-${pid}`];}
+function nineSetScore(hole,pid,v){
+  if(!S.nineScores)S.nineScores={};
+  if(v===undefined||v===null||v<1)delete S.nineScores[`${hole}-${pid}`];
+  else S.nineScores[`${hole}-${pid}`]=v;
+  save();
+}
+
 function nineNetScore(hole,pid){
-  const g=getScore(hole,pid);
+  const g=nineGetScore(hole,pid);
   if(g===undefined)return undefined;
-  // Net vs lowest hdcp among the 3 nine players
-  const hdcps=S.ninePlayers.map(id=>S.players.find(p=>p.id===id)?.hdcp||0);
+  const hdcps=['P1','P2','P3'].map(id=>npHdcp(id));
   const minH=Math.min(...hdcps);
-  const pH=S.players.find(p=>p.id===pid)?.hdcp||0;
-  const pops=pH-minH;
+  const pops=npHdcp(pid)-minH;
   const hd=HOLES[hole-1].hdcp;
   const strokes=pops>=hd?1:0;
   return g-strokes;
@@ -1371,7 +1385,7 @@ function nineGreenieMoney(){
   PAR3S.forEach(hole=>{
     const pid=S.nineGreenies[hole];
     if(!pid||!S.ninePlayers.includes(pid))return;
-    const score=getScore(hole,pid);
+    const score=nineGetScore(hole,pid);
     if(score===undefined)return;
     const diff=score-HOLES[hole-1].par;
     const others=S.ninePlayers.filter(id=>id!==pid);
@@ -1381,19 +1395,21 @@ function nineGreenieMoney(){
     else if(diff===0)amt=5;
     else amt=-10;
     others.forEach(oid=>{money[oid]-=amt;});
-    money[pid]+=amt*2; // 2 others
+    money[pid]+=amt*2;
   });
   return money;
 }
 
 // Can player press? Must be losing (below average in points) and not yet pressed
 function canPress(pid,throughHole){
-  if(S.ninePresses&&S.ninePresses[pid]!==undefined)return false; // already pressed
+  if(S.ninePresses&&S.ninePresses[pid]!==undefined)return false;
   const pressCount=Object.values(S.ninePresses||{}).filter(v=>v!==null).length;
-  if(pressCount>=2)return false; // max 2 presses used
+  if(pressCount>=2)return false;
   const tots=nineRunningPoints(throughHole);
-  const avg=9*throughHole/3;
-  return tots[pid]<avg; // losing
+  const holesScored=Array.from({length:throughHole},(_,i)=>i+1).filter(h=>ninePointsForHole(h)!==null).length;
+  if(holesScored===0)return false;
+  const avg=9*holesScored/3;
+  return tots[pid]<avg;
 }
 
 // ── Nine game tab switching ──
@@ -1410,7 +1426,8 @@ function showNineNine(nine){
 function renderNineGame(){
   if(!S.ninePlayers.length){go('nine-setup');return;}
   const tee=TEES.find(t=>t.name===S.tee)||TEES[0];
-  document.getElementById('nine-meta').textContent=`${S.date||'Today'} · ${tee.name} · $1–$3/pt`;
+  const names=S.ninePlayers.map(id=>npName(id)).join(', ');
+  document.getElementById('nine-meta').textContent=`${S.date||'Today'} · ${tee.name} · ${names}`;
   const body=document.getElementById('nine-body');
   body.innerHTML='';
   const hset=S.nineNine==='front'?HOLES.slice(0,9):HOLES.slice(9,18);
@@ -1438,7 +1455,7 @@ function buildNineHoleCard(hd){
     const v=runDollars[id];
     const cls=v>0?'npt-lead':v<0?'npt-trail':'npt-mid';
     const pill=document.createElement('div');pill.className=`npt-pill ${cls}`;
-    pill.textContent=`${pName(id)} ${v>=0?'+$'+v:'-$'+Math.abs(v)}`;
+    pill.textContent=`${npName(id)} ${v>=0?'+$'+v:'-$'+Math.abs(v)}`;
     pillDiv.appendChild(pill);
   });
 
@@ -1451,13 +1468,13 @@ function buildNineHoleCard(hd){
   // Score rows
   const scoreList=document.createElement('div');scoreList.className='np-score-list';
   S.ninePlayers.forEach(pid=>{
-    const score=getScore(hd.h,pid);
+    const score=nineGetScore(hd.h,pid);
     const net=nineNetScore(hd.h,pid);
     const holePoints=pts?pts[pid]:undefined;
     const rowCls=holePoints===5||holePoints===4?'winner':holePoints===3&&pts&&Object.values(pts).every(v=>v===3)?'second':holePoints===3?'second':'';
     const row=document.createElement('div');row.className=`np-srow ${rowCls}`;row.id=`nsr-${hd.h}-${pid}`;
 
-    const nm=document.createElement('div');nm.className='np-name';nm.textContent=pName(pid);
+    const nm=document.createElement('div');nm.className='np-name';nm.textContent=npName(pid);
     const stpr=document.createElement('div');stpr.className='stepper';
     const mb=document.createElement('button');mb.className='sbtn';mb.textContent='−';
     mb.onclick=e=>{e.stopPropagation();adjNine(hd,pid,-1);};
@@ -1501,7 +1518,7 @@ function buildNineHoleCard(hd){
       row.className=`np-press-row${alreadyPressed?' pressed':canP?'':' used'}`;
       row.innerHTML=`
         <div class="np-press-check">${alreadyPressed?'✓':''}</div>
-        <div class="np-press-name">${pName(pid)}</div>
+        <div class="np-press-name">${npName(pid)}</div>
         <div class="np-press-status">${alreadyPressed?`Pressed hole ${S.ninePresses[pid]}`:canP?'Can press (losing)':'—'}</div>`;
       if(canP&&!alreadyPressed){row.onclick=e=>{e.stopPropagation();ninePress(pid,hd.h);};}
       pl.appendChild(row);
@@ -1527,10 +1544,10 @@ function toggleNineHole(hole){
 }
 
 function adjNine(hd,pid,delta){
-  const cur=getScore(hd.h,pid);
+  const cur=nineGetScore(hd.h,pid);
   const nv=cur===undefined?hd.par+delta:cur+delta;
   if(nv<1)return;
-  setScore(hd.h,pid,nv);
+  nineSetScore(hd.h,pid,nv);
   refreshNineHoleCard(hd.h);
 }
 
@@ -1539,9 +1556,8 @@ function refreshNineHoleCard(hole){
   const pts=ninePointsForHole(hole);
   const rate=nineRateAtHole(hole);
   const runDollars=nineRunningDollars(hole);
-  // Update score vals and points badges
   S.ninePlayers.forEach(pid=>{
-    const score=getScore(hole,pid);
+    const score=nineGetScore(hole,pid);
     const net=nineNetScore(hole,pid);
     const vel=document.getElementById(`nsv-${hole}-${pid}`);
     if(vel){vel.className='sval '+scoreClass(score,hd.par);vel.textContent=score!==undefined?score:'·';
@@ -1550,11 +1566,9 @@ function refreshNineHoleCard(hole){
     const pel=document.getElementById(`npts-${hole}-${pid}`);
     const hp=pts?pts[pid]:undefined;
     if(pel){pel.className=`np-pts-earned ${hp?'p'+hp:''}`;pel.textContent=hp!==undefined?hp+'pt':'·';}
-    // Row highlight
     const row=document.getElementById(`nsr-${hole}-${pid}`);
     if(row){const cls=hp===5||hp===4?'winner':hp===3?'second':'';row.className=`np-srow ${cls}`;}
   });
-  // Update header pills
   const pillDiv=document.querySelector(`#nhc-${hole} .nph-pts`);
   if(pillDiv){
     pillDiv.innerHTML='';
@@ -1562,28 +1576,27 @@ function refreshNineHoleCard(hole){
       const v=runDollars[id];
       const cls=v>0?'npt-lead':v<0?'npt-trail':'npt-mid';
       const pill=document.createElement('div');pill.className=`npt-pill ${cls}`;
-      pill.textContent=`${pName(id)} ${v>=0?'+$'+v:'-$'+Math.abs(v)}`;
+      pill.textContent=`${npName(id)} ${v>=0?'+$'+v:'-$'+Math.abs(v)}`;
       pillDiv.appendChild(pill);
     });
   }
-  // Update rate label
   const rateLbl=document.querySelector(`#nhc-${hole} .nph-rate`);
   if(rateLbl)rateLbl.textContent=`$${rate}/pt`;
-  // Refresh greenie result
   if(PAR3S.includes(hole))refreshNineGreenieResult(hole);
 }
 
 function ninePress(pid,hole){
   if(!S.ninePresses)S.ninePresses={};
   S.ninePresses[pid]=hole;save();
-  showToast(`⚡ ${pName(pid)} pressed! Rate now $${Math.min(Object.values(S.ninePresses).filter(v=>v!==null).length+1,3)}/pt from hole ${hole}`);
+  const pressCount=Object.values(S.ninePresses).filter(v=>v!==null).length;
+  showToast(`⚡ ${npName(pid)} pressed! Rate now $${Math.min(pressCount+1,3)}/pt from hole ${hole}`);
   renderNineGame();
 }
 
 // ── Nine Greenies ──
 function buildNineGreenieSection(hd){
   const sec=document.createElement('div');sec.className='greenie-section';sec.id=`ngs-${hd.h}`;
-  sec.innerHTML=`<div class="g-title">🏌 Greenie — hole ${hd.h} (9pt players only)</div>`;
+  sec.innerHTML=`<div class="g-title">🏌 Greenie — hole ${hd.h}</div>`;
   const list=document.createElement('div');list.className='g-players';
   S.ninePlayers.forEach(pid=>{
     const row=document.createElement('div');
@@ -1593,7 +1606,7 @@ function buildNineGreenieSection(hd){
     const rt=nineGreenieResultText(hd,pid);
     row.innerHTML=`
       <div class="g-radio"><div class="g-radio-dot"></div></div>
-      <div class="g-name">${pName(pid)}</div>
+      <div class="g-name">${npName(pid)}</div>
       <div class="g-result ${rt.cls}" id="ngr-res-${hd.h}-${pid}">${rt.txt}</div>`;
     list.appendChild(row);
   });
@@ -1605,7 +1618,7 @@ function buildNineGreenieSection(hd){
 }
 
 function nineGreenieResultText(hd,pid){
-  const score=getScore(hd.h,pid);
+  const score=nineGetScore(hd.h,pid);
   if(S.nineGreenies[hd.h]!==pid)return{cls:'g-none',txt:''};
   if(score===undefined)return{cls:'g-none',txt:'(no score)'};
   const diff=score-hd.par;
@@ -1659,7 +1672,7 @@ function renderNineLedger(){
     const v=netMoney[id];const cls=v>0?'pos':v<0?'neg':'zer';
     const txt=v>=0?`+$${v.toFixed(0)}`:`−$${Math.abs(v).toFixed(0)}`;
     const row=document.createElement('div');row.className='nine-ledger-row';
-    row.innerHTML=`<div class="nlr-name">${pName(id)}</div><div class="nlr-pts">${totPts[id]}pts</div><div class="nlr-money ${cls}">${txt}</div>`;
+    row.innerHTML=`<div class="nlr-name">${npName(id)}</div><div class="nlr-pts">${totPts[id]}pts</div><div class="nlr-money ${cls}">${txt}</div>`;
     mc.appendChild(row);
   });
   body.appendChild(mc);
@@ -1671,7 +1684,7 @@ function renderNineLedger(){
     oc.innerHTML='<div class="owes-hdr">Settlement</div>';
     txns.forEach(t=>{
       const row=document.createElement('div');row.className='owes-row';
-      row.innerHTML=`<div class="owes-from">${pName(t.from)}</div><div class="owes-arrow">→</div><div class="owes-to">${pName(t.to)}</div><div class="owes-amt">$${t.amt.toFixed(2)}</div>`;
+      row.innerHTML=`<div class="owes-from">${npName(t.from)}</div><div class="owes-arrow">→</div><div class="owes-to">${npName(t.to)}</div><div class="owes-amt">$${t.amt.toFixed(2)}</div>`;
       oc.appendChild(row);
     });
     body.appendChild(oc);
@@ -1682,7 +1695,7 @@ function renderNineLedger(){
   ptCard.innerHTML='<div style="padding:10px 14px;font-family:DM Serif Display,serif;font-size:15px;color:var(--amberl);border-bottom:1px solid var(--bd)">Points by hole</div>';
   const hdrRow=document.createElement('div');
   hdrRow.style.cssText='display:grid;grid-template-columns:40px 1fr 1fr 1fr 60px;padding:6px 14px;font-size:10px;color:var(--txd);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--bd)';
-  hdrRow.innerHTML=`<div>Hole</div>${S.ninePlayers.map(id=>`<div>${pName(id)}</div>`).join('')}<div>Rate</div>`;
+  hdrRow.innerHTML=`<div>Hole</div>${S.ninePlayers.map(id=>`<div>${npName(id)}</div>`).join('')}<div>Rate</div>`;
   ptCard.appendChild(hdrRow);
   for(let h=1;h<=18;h++){
     const pts=ninePointsForHole(h);const rate=nineRateAtHole(h);
@@ -1706,12 +1719,12 @@ function renderNineLedger(){
   PAR3S.forEach(hole=>{
     const pid=S.nineGreenies[hole];
     if(!pid||!S.ninePlayers.includes(pid))return;hasG=true;
-    const score=getScore(hole,pid);const hd=HOLES[hole-1];
+    const score=nineGetScore(hole,pid);const hd=HOLES[hole-1];
     const diff=score!==undefined?score-hd.par:null;
     let resultStr='(no score)',cls='';
     if(diff!==null){if(diff<=-2){resultStr='Eagle +$40';cls='win';}else if(diff===-1){resultStr='Birdie +$20';cls='win';}else if(diff===0){resultStr='Par +$10';cls='win';}else{resultStr='Bogey −$20';cls='lose';}}
     const row=document.createElement('div');row.className='gl-row';
-    row.innerHTML=`<div class="gl-hole">Hole ${hole}</div><div class="gl-player">${pName(pid)}</div><div class="gl-result ${cls}">${resultStr}</div>`;
+    row.innerHTML=`<div class="gl-hole">Hole ${hole}</div><div class="gl-player">${npName(pid)}</div><div class="gl-result ${cls}">${resultStr}</div>`;
     gc.appendChild(row);
   });
   if(!hasG){const r=document.createElement('div');r.className='gl-row';r.innerHTML='<div style="color:var(--txd);font-size:13px">No greenies marked yet</div>';gc.appendChild(r);}
@@ -1724,7 +1737,7 @@ function renderNineLedger(){
     S.ninePlayers.forEach(pid=>{
       if(S.ninePresses[pid]===undefined)return;
       const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--bd);font-size:13px';
-      row.innerHTML=`<span style="color:var(--tx)">${pName(pid)}</span><span style="color:var(--purpp);font-family:DM Mono,monospace">Pressed hole ${S.ninePresses[pid]}</span>`;
+      row.innerHTML=`<span style="color:var(--tx)">${npName(pid)}</span><span style="color:var(--purpp);font-family:DM Mono,monospace">Pressed hole ${S.ninePresses[pid]}</span>`;
       pc.appendChild(row);
     });
     const rateRow=document.createElement('div');rateRow.style.cssText='padding:8px 14px;font-size:12px;color:var(--txm);font-style:italic';
