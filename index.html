@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="The Wheel">
+<meta name="theme-color" content="#0a1f0f">
+<link rel="manifest" href="manifest.json">
+<title>The Wheel</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g0:#061209;--g1:#0a1f0f;--g2:#122b17;--g3:#1a3d21;--g4:#2d7a3a;--g5:#4caf62;--gp:#a8d5b0;
+  --gold:#c9a84c;--goldl:#e8c87a;--goldp:#f5e6c0;
+  --navy:#1a3a5c;--navyl:#2e6da4;--navyp:#a8c8e8;
+  --red:#c0392b;--redl:#e74c3c;--redp:#f5a8a0;
+  --purp:#6b3fa0;--purpl:#9b6fd0;--purpp:#d4b8f0;
+  --amber:#b8860b;--amberl:#d4a020;--amberp:#f5e0a0;
+  --tx:#f0ede8;--txm:#8faa94;--txd:#4d6b52;
+  --bd:rgba(255,255,255,0.07);--bdg:rgba(201,168,76,0.25);
+  --cr:12px;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--g1);color:var(--tx);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+body{display:flex;flex-direction:column;padding-top:var(--safe-t);padding-bottom:var(--safe-b);min-height:100dvh}
+
+/* SCREENS */
+.scr{display:none;flex-direction:column;height:100dvh;overflow:hidden}
+.scr.on{display:flex}
+
+/* HEADER */
+.hdr{background:var(--g2);border-bottom:1px solid var(--bdg);padding:12px 16px 10px;flex-shrink:0;display:flex;align-items:center;gap:10px}
+.hdr-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--gold);line-height:1}
+.hdr-sub{font-size:11px;color:var(--txm);letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+.hdr-actions{margin-left:auto;display:flex;gap:6px}
+.hbtn{padding:7px 13px;border-radius:20px;border:1px solid var(--bdg);background:rgba(201,168,76,.1);color:var(--gold);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.hbtn:active{transform:scale(.96)}
+.hbtn.purple{border-color:rgba(107,63,160,.4);background:rgba(107,63,160,.15);color:var(--purpp)}
+.hbtn.ghost{border-color:var(--bd);background:transparent;color:var(--txm)}
+.back{background:none;border:none;color:var(--txm);font-size:24px;cursor:pointer;padding:0 6px 0 0;line-height:1;flex-shrink:0}
+
+/* BOTTOM NAV */
+.bnav{background:var(--g2);border-top:1px solid var(--bd);display:flex;flex-shrink:0}
+.bnav-btn{flex:1;padding:10px 4px 8px;background:none;border:none;color:var(--txd);font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'DM Sans',sans-serif;transition:color .15s}
+.bnav-btn .icon{font-size:18px;line-height:1}
+.bnav-btn.on{color:var(--gold)}
+
+/* SCROLL BODY */
+.body{flex:1;overflow-y:auto;padding:12px 14px;-webkit-overflow-scrolling:touch}
+
+/* SETUP */
+.slabel{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--txm);margin:20px 0 8px}
+.slabel:first-child{margin-top:0}
+.card{background:var(--g2);border:1px solid var(--bd);border-radius:var(--cr);overflow:hidden;margin-bottom:10px}
+.card-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--bd)}
+.card-row:last-child{border-bottom:none}
+.badge{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0}
+.bw{background:rgba(26,58,92,.5);color:var(--navyp);border:1px solid rgba(46,109,164,.4)}
+.bo{background:rgba(192,57,43,.2);color:var(--redp);border:1px solid rgba(192,57,43,.35)}
+.pinputs{flex:1;display:flex;gap:6px}
+.inp{background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 10px;outline:none;transition:border-color .15s;width:100%}
+.inp:focus{border-color:var(--gold)}
+.inp-sm{flex:0 0 56px;text-align:center;font-size:13px}
+.inp-sm::placeholder{font-size:11px}
+
+/* TEE BUTTONS */
+.tee-wrap{display:flex;gap:6px;flex-wrap:wrap}
+.tbtn{padding:7px 14px;border-radius:20px;border:1px solid var(--bd);background:rgba(255,255,255,.04);color:var(--txm);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'DM Sans',sans-serif}
+.tbtn.on{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.1)}
+.tdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* MATCH KEY */
+.mkey{display:grid;grid-template-columns:80px 1fr 1fr 1fr;font-size:12px}
+.mkc{padding:8px 6px;text-align:center;border-right:1px solid var(--bd);border-bottom:1px solid var(--bd)}
+.mkc:last-child{border-right:none}
+.mkc.lbl{text-align:left;padding-left:10px;color:var(--txm);font-size:11px}
+.mkc.hd{background:var(--navy);color:var(--navyp);font-weight:500;font-size:11px;letter-spacing:.04em}
+.mkc.ws{color:var(--navyp)}
+.mkc.os{color:var(--redp)}
+.mkey .mkc:nth-child(n):last-of-type{border-bottom:none}
+.mkey-last .mkc{border-bottom:none}
+
+/* BIG START BTN */
+.startbtn{width:100%;margin-top:24px;padding:15px;background:var(--g4);border:none;border-radius:var(--cr);color:#fff;font-family:'DM Serif Display',serif;font-size:18px;letter-spacing:.04em;cursor:pointer}
+.startbtn:active{background:var(--g5)}
+
+/* SCORE SCREEN */
+.nine-label{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--txd);padding:6px 0 4px}
+
+/* HOLE CARD */
+.hcard{background:var(--g2);border:1px solid var(--bd);border-radius:var(--cr);margin-bottom:8px;overflow:hidden;transition:border-color .2s}
+.hcard.open{border-color:var(--gold)}
+.hcard-hdr{display:flex;align-items:center;padding:10px 12px 8px;gap:8px;cursor:pointer;user-select:none}
+.hnum{font-family:'DM Serif Display',serif;font-size:28px;color:var(--gold);min-width:34px;line-height:1}
+.hinfo{flex:1}
+.hpar{font-size:12px;color:var(--txm)}
+.hpar b{color:var(--gp);font-weight:500}
+.hhdcp{display:inline-block;font-size:10px;color:var(--txd);font-family:'DM Mono',monospace;background:rgba(255,255,255,.05);border:1px solid var(--bd);padding:1px 6px;border-radius:4px;margin-top:2px}
+.p3-flag{display:inline-block;font-size:10px;color:var(--amberl);background:rgba(184,134,11,.15);border:1px solid rgba(184,134,11,.3);padding:1px 7px;border-radius:4px;margin-left:4px}
+.hmscore{display:flex;flex-direction:column;gap:3px;align-items:flex-end}
+.ms-pill{font-size:10px;font-family:'DM Mono',monospace;padding:2px 7px;border-radius:8px;font-weight:500;white-space:nowrap}
+.ms-w{background:rgba(46,122,58,.3);color:var(--gp);border:1px solid rgba(46,122,58,.4)}
+.ms-o{background:rgba(192,57,43,.2);color:var(--redp);border:1px solid rgba(192,57,43,.3)}
+.ms-e{background:rgba(201,168,76,.1);color:var(--goldl);border:1px solid rgba(201,168,76,.2)}
+.chevron{color:var(--txd);font-size:14px;transition:transform .2s;flex-shrink:0}
+.hcard.open .chevron{transform:rotate(180deg)}
+
+/* HOLE BODY */
+.hbody{padding:0 12px 12px;display:none}
+.hcard.open .hbody{display:block}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.sg-group{}
+.sg-lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--txd);margin-bottom:5px;font-weight:500}
+.sg-players{display:flex;flex-direction:column;gap:4px}
+.srow{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.03);border-radius:8px;padding:6px 8px}
+.srow-name{flex:1;font-size:12px;color:var(--txm);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow-name.pops{color:var(--goldl)}
+.stepper{display:flex;align-items:center;gap:4px}
+.sbtn{width:26px;height:26px;border-radius:6px;border:1px solid var(--bd);background:rgba(255,255,255,.05);color:var(--tx);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'DM Sans',sans-serif}
+.sbtn:active{transform:scale(.88);background:rgba(255,255,255,.15)}
+.sval{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;min-width:22px;text-align:center}
+.v-eagle{color:#f0c040}.v-birdie{color:var(--g5)}.v-par{color:var(--tx)}.v-bogey{color:var(--redp)}.v-double{color:var(--redl)}.v-empty{color:var(--txd)}
+
+.low-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:rgba(46,122,58,.08);border:1px solid rgba(46,122,58,.18);border-radius:7px;margin-top:5px;font-size:11px}
+.low-lbl{color:var(--txm)}
+.low-vals{font-family:'DM Mono',monospace;font-size:12px;color:var(--gp);font-weight:500}
+
+.mresult-row{display:flex;gap:5px;margin:8px 0}
+.mres{flex:1;padding:7px 4px;background:rgba(201,168,76,.05);border:1px solid var(--bdg);border-radius:8px;text-align:center}
+.mres-lbl{font-size:9px;color:var(--txd);letter-spacing:.06em;text-transform:uppercase}
+.mres-val{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--gold)}
+.mres-val.w{color:var(--g5)}.mres-val.o{color:var(--redp)}.mres-val.e{color:var(--goldl)}
+
+/* GREENIE SECTION */
+.greenie-section{background:rgba(184,134,11,.07);border:1px solid rgba(184,134,11,.2);border-radius:8px;padding:10px;margin-top:6px}
+.g-title{font-size:11px;font-weight:500;color:var(--amberl);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.g-players{display:flex;flex-direction:column;gap:4px}
+.g-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:7px;background:rgba(255,255,255,.03);cursor:pointer;transition:background .15s}
+.g-row:active{background:rgba(184,134,11,.15)}
+.g-row.closest{background:rgba(184,134,11,.18);border:1px solid rgba(184,134,11,.35)}
+.g-name{flex:1;font-size:13px;color:var(--tx)}
+.g-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--bd);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.g-row.closest .g-radio{border-color:var(--amberl);background:var(--amber)}
+.g-radio-dot{width:8px;height:8px;border-radius:50%;background:var(--goldp);display:none}
+.g-row.closest .g-radio-dot{display:block}
+.g-result{font-size:11px;font-family:'DM Mono',monospace;padding:2px 8px;border-radius:6px}
+.g-win{color:var(--g5);background:rgba(76,175,98,.15)}
+.g-lose{color:var(--redp);background:rgba(192,57,43,.15)}
+.g-none{color:var(--txd)}
+
+/* PRESS BUTTON */
+.press-trigger{width:100%;margin-top:6px;padding:8px;background:rgba(107,63,160,.12);border:1px dashed rgba(107,63,160,.35);border-radius:8px;color:var(--purpp);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif}
+.press-trigger:active{background:rgba(107,63,160,.25)}
+
+/* PRESSES SCREEN */
+.press-card{background:var(--g2);border:1px solid rgba(107,63,160,.3);border-radius:var(--cr);margin-bottom:10px;overflow:hidden}
+.press-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(107,63,160,.1);border-bottom:1px solid rgba(107,63,160,.2)}
+.press-num{font-family:'DM Serif Display',serif;font-size:17px;color:var(--purpp)}
+.press-meta{font-size:12px;color:var(--txm)}
+.press-del{background:none;border:none;color:var(--txd);font-size:20px;cursor:pointer;padding:0 4px;line-height:1}
+.press-body{padding:10px 14px}
+.press-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.pinfo{background:rgba(255,255,255,.04);border-radius:7px;padding:7px 10px}
+.pinfo-lbl{font-size:10px;color:var(--txd);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.pinfo-val{font-size:13px;color:var(--tx);font-weight:500}
+.press-score-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(107,63,160,.08);border-radius:8px;border:1px solid rgba(107,63,160,.2)}
+.ps-lbl{font-size:12px;color:var(--purpp)}
+.ps-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500}
+.ps-val.w{color:var(--g5)}.ps-val.o{color:var(--redp)}.ps-val.e{color:var(--goldl)}
+.add-press-btn{width:100%;padding:14px;background:rgba(107,63,160,.1);border:1px dashed rgba(107,63,160,.4);border-radius:var(--cr);color:var(--purpp);font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px}
+.add-press-btn:active{background:rgba(107,63,160,.25)}
+.no-presses{text-align:center;padding:40px 20px;color:var(--txd);font-size:14px}
+
+/* LEDGER SCREEN */
+.ledger-seg{margin-bottom:16px}
+.ledger-seg-title{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--txm);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.ledger-seg-title::after{content:'';flex:1;height:1px;background:var(--bd)}
+.ledger-match{background:var(--g2);border:1px solid var(--bd);border-radius:var(--cr);overflow:hidden;margin-bottom:6px}
+.lm-hdr{padding:9px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.lm-title{font-size:13px;font-weight:500;color:var(--tx)}
+.lm-stake{font-family:'DM Mono',monospace;font-size:13px;color:var(--txm)}
+.lm-result{font-size:13px;font-weight:500;font-family:'DM Mono',monospace}
+.lm-result.w{color:var(--g5)}.lm-result.o{color:var(--redp)}.lm-result.e{color:var(--goldl)}
+
+/* MONEY SUMMARY */
+.money-card{background:var(--g2);border:1px solid var(--bdg);border-radius:var(--cr);overflow:hidden;margin-bottom:12px}
+.money-hdr{padding:12px 16px;background:rgba(201,168,76,.08);border-bottom:1px solid var(--bdg);font-family:'DM Serif Display',serif;font-size:16px;color:var(--gold)}
+.money-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--bd)}
+.money-row:last-child{border-bottom:none}
+.money-name{font-size:14px;color:var(--tx);font-weight:500}
+.money-net{font-family:'DM Mono',monospace;font-size:18px;font-weight:500}
+.money-net.pos{color:var(--g5)}.money-net.neg{color:var(--redp)}.money-net.zer{color:var(--txm)}
+.money-breakdown{font-size:11px;color:var(--txd)}
+
+.owes-card{background:var(--g2);border:1px solid var(--bd);border-radius:var(--cr);overflow:hidden;margin-bottom:8px}
+.owes-hdr{padding:10px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--bd);font-size:12px;font-weight:500;color:var(--txm);letter-spacing:.06em;text-transform:uppercase}
+.owes-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bd);gap:10px}
+.owes-row:last-child{border-bottom:none}
+.owes-from{font-size:14px;color:var(--redp);font-weight:500;min-width:80px}
+.owes-arrow{color:var(--txd);font-size:14px}
+.owes-to{font-size:14px;color:var(--g5);font-weight:500;flex:1}
+.owes-amt{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--gold)}
+
+/* GREENIE LEDGER */
+.greenie-ledger{background:rgba(184,134,11,.07);border:1px solid rgba(184,134,11,.2);border-radius:var(--cr);margin-bottom:12px;overflow:hidden}
+.gl-hdr{padding:12px 16px;border-bottom:1px solid rgba(184,134,11,.2);font-family:'DM Serif Display',serif;font-size:16px;color:var(--amberl)}
+.gl-row{display:flex;align-items:center;justify-content:space-between;padding:9px 16px;border-bottom:1px solid rgba(184,134,11,.1)}
+.gl-row:last-child{border-bottom:none}
+.gl-hole{font-size:12px;color:var(--txm);min-width:60px}
+.gl-player{font-size:13px;color:var(--tx);flex:1}
+.gl-result{font-size:12px;font-family:'DM Mono',monospace}
+.gl-result.win{color:var(--g5)}.gl-result.lose{color:var(--redp)}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center}
+.modal.on{display:flex}
+.modal-sheet{background:var(--g2);border-top:1px solid var(--bdg);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 20px calc(20px + var(--safe-b));animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--purpp);margin-bottom:16px}
+.mrow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.mrow label{font-size:13px;color:var(--txm);min-width:90px;flex-shrink:0}
+.msel,.minp{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;padding:9px 12px;outline:none;appearance:none;-webkit-appearance:none}
+.msel option{background:#122b17}
+.modal-btns{display:flex;gap:10px;margin-top:20px}
+.mcancel{flex:1;padding:13px;border-radius:10px;border:1px solid var(--bd);background:transparent;color:var(--txm);font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.mconfirm{flex:2;padding:13px;border-radius:10px;border:none;background:var(--purp);color:#fff;font-family:'DM Serif Display',serif;font-size:17px;cursor:pointer}
+
+/* MISC */
+.hint{font-size:11px;color:var(--txd);font-style:italic;margin:4px 0 0 2px}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+select option{background:#122b17}
+
+/* GAME MODE SWITCH */
+.mode-switch{display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--bd);margin-bottom:4px}
+.mode-btn{flex:1;padding:11px 8px;background:transparent;border:none;color:var(--txm);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;text-align:center}
+.mode-btn.on{background:var(--g3);color:var(--gp)}
+.mode-btn:first-child{border-right:1px solid var(--bd)}
+
+/* 9 POINT SCREEN */
+#s-nine .hdr-title{color:var(--amberl)}
+.nine-pt-hole{background:var(--g2);border:1px solid var(--bd);border-radius:var(--cr);margin-bottom:8px;overflow:hidden}
+.nine-pt-hole.open{border-color:var(--amberl)}
+.nph-hdr{display:flex;align-items:center;padding:10px 12px 8px;gap:8px;cursor:pointer}
+.nph-num{font-family:'DM Serif Display',serif;font-size:28px;color:var(--amberl);min-width:34px;line-height:1}
+.nph-info{flex:1}
+.nph-rate{font-size:11px;font-family:'DM Mono',monospace;color:var(--amberl);background:rgba(184,134,11,.15);border:1px solid rgba(184,134,11,.25);padding:2px 7px;border-radius:6px}
+.nph-pts{display:flex;flex-direction:column;gap:3px;align-items:flex-end}
+.npt-pill{font-size:10px;font-family:'DM Mono',monospace;padding:2px 7px;border-radius:8px;font-weight:500}
+.npt-lead{background:rgba(46,122,58,.25);color:var(--gp);border:1px solid rgba(46,122,58,.3)}
+.npt-mid{background:rgba(184,134,11,.15);color:var(--goldl);border:1px solid rgba(184,134,11,.2)}
+.npt-trail{background:rgba(192,57,43,.15);color:var(--redp);border:1px solid rgba(192,57,43,.2)}
+.nph-body{padding:0 12px 12px;display:none}
+.nine-pt-hole.open .nph-body{display:block}
+.np-score-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.np-srow{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:8px}
+.np-srow.winner{background:rgba(46,122,58,.1);border:1px solid rgba(46,122,58,.2)}
+.np-srow.second{background:rgba(184,134,11,.08);border:1px solid rgba(184,134,11,.15)}
+.np-name{flex:1;font-size:13px;color:var(--tx)}
+.np-pts-earned{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;min-width:28px;text-align:center}
+.np-pts-earned.p5{color:var(--g5)}.np-pts-earned.p4{color:var(--gp)}.np-pts-earned.p3{color:var(--goldl)}.np-pts-earned.p2{color:var(--txm)}.np-pts-earned.p1{color:var(--txd)}
+.np-running{font-family:'DM Mono',monospace;font-size:12px;color:var(--txm);min-width:36px;text-align:right}
+.np-dollar{font-family:'DM Mono',monospace;font-size:12px;min-width:50px;text-align:right}
+.np-dollar.pos{color:var(--g5)}.np-dollar.neg{color:var(--redp)}
+.np-hole-total{font-size:11px;color:var(--txd);text-align:center;padding:4px;font-style:italic}
+.np-press-section{background:rgba(184,134,11,.07);border:1px solid rgba(184,134,11,.2);border-radius:8px;padding:10px;margin-top:6px}
+.np-press-title{font-size:11px;font-weight:500;color:var(--amberl);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.np-press-list{display:flex;flex-direction:column;gap:4px}
+.np-press-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;background:rgba(255,255,255,.03);cursor:pointer}
+.np-press-row:active{background:rgba(184,134,11,.15)}
+.np-press-row.pressed{background:rgba(184,134,11,.18);border:1px solid rgba(184,134,11,.35)}
+.np-press-row.used{opacity:.4;cursor:default}
+.np-press-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--bd);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px}
+.np-press-row.pressed .np-press-check{border-color:var(--amberl);background:var(--amber);color:#fff}
+.np-press-name{flex:1;font-size:13px;color:var(--tx)}
+.np-press-status{font-size:11px;color:var(--txd)}
+
+/* 9PT LEDGER */
+.nine-ledger{background:rgba(184,134,11,.07);border:1px solid rgba(184,134,11,.2);border-radius:var(--cr);margin-bottom:12px;overflow:hidden}
+.nine-ledger-hdr{padding:12px 16px;border-bottom:1px solid rgba(184,134,11,.2);font-family:'DM Serif Display',serif;font-size:16px;color:var(--amberl);display:flex;justify-content:space-between;align-items:center}
+.nine-ledger-rate{font-size:12px;font-family:'DM Mono',monospace;color:var(--txm)}
+.nine-ledger-row{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(184,134,11,.1);gap:10px}
+.nine-ledger-row:last-child{border-bottom:none}
+.nlr-name{font-size:14px;color:var(--tx);font-weight:500;flex:1}
+.nlr-pts{font-family:'DM Mono',monospace;font-size:13px;color:var(--txm);min-width:50px;text-align:center}
+.nlr-money{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;min-width:70px;text-align:right}
+.nlr-money.pos{color:var(--g5)}.nlr-money.neg{color:var(--redp)}.nlr-money.zer{color:var(--txm)}
+
+/* AUTO PRESS TOAST */
+.toast{position:fixed;top:calc(var(--safe-t) + 60px);left:50%;transform:translateX(-50%);
+  background:var(--purp);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  padding:10px 18px;border-radius:20px;border:1px solid var(--purpl);
+  white-space:nowrap;z-index:300;opacity:0;transition:opacity .25s;pointer-events:none;
+  max-width:90vw;text-align:center;line-height:1.4}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- ══ SETUP ══ -->
+<div id="s-setup" class="scr on">
+  <div class="hdr">
+    <div><div class="hdr-title">The Wheel</div><div class="hdr-sub">Edina Country Club</div></div>
+    <div class="hdr-actions"><button class="hbtn" onclick="startRound()">Start Round →</button></div>
+  </div>
+  <div class="body" id="setup-body"></div>
+</div>
+
+<!-- ══ SCORECARD ══ -->
+<div id="s-score" class="scr">
+  <div class="hdr">
+    <button class="back" onclick="go('setup')">‹</button>
+    <div><div class="hdr-title">Scorecard</div><div class="hdr-sub" id="round-meta"></div></div>
+    <div class="hdr-actions">
+      <button class="hbtn ghost" onclick="go('presses')">Presses</button>
+    </div>
+  </div>
+  <div style="background:var(--g2);border-bottom:1px solid var(--bd);padding:8px 14px;flex-shrink:0;display:flex;gap:6px" id="nine-tabs">
+    <button id="tab-front" onclick="showNine('front')" style="flex:1;padding:7px;border-radius:8px;border:1px solid var(--g4);background:var(--g3);color:var(--gp);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Front 9</button>
+    <button id="tab-back"  onclick="showNine('back')"  style="flex:1;padding:7px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--txm);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Back 9</button>
+  </div>
+  <div class="body" id="score-body"></div>
+  <div class="bnav">
+    <button class="bnav-btn on" onclick="go('score')"><span class="icon">⛳</span>Card</button>
+    <button class="bnav-btn" onclick="go('presses')"><span class="icon">⚡</span>Presses</button>
+    <button class="bnav-btn" onclick="go('ledger')"><span class="icon">💰</span>Money</button>
+  </div>
+</div>
+
+<!-- ══ PRESSES ══ -->
+<div id="s-presses" class="scr">
+  <div class="hdr">
+    <button class="back" onclick="go('score')">‹</button>
+    <div><div class="hdr-title" style="color:var(--purpp)">Press Log</div><div class="hdr-sub">All active presses</div></div>
+    <div class="hdr-actions"><button class="hbtn purple" onclick="openPressModal(null)">+ Press</button></div>
+  </div>
+  <div class="body" id="press-body"></div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="go('score')"><span class="icon">⛳</span>Card</button>
+    <button class="bnav-btn on" onclick="go('presses')"><span class="icon">⚡</span>Presses</button>
+    <button class="bnav-btn" onclick="go('ledger')"><span class="icon">💰</span>Money</button>
+  </div>
+</div>
+
+<!-- ══ LEDGER ══ -->
+<div id="s-ledger" class="scr">
+  <div class="hdr">
+    <button class="back" onclick="go('score')">‹</button>
+    <div><div class="hdr-title">Money</div><div class="hdr-sub">5 · 5 · 5 + Greenies</div></div>
+  </div>
+  <div class="body" id="ledger-body"></div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="go('score')"><span class="icon">⛳</span>Card</button>
+    <button class="bnav-btn" onclick="go('presses')"><span class="icon">⚡</span>Presses</button>
+    <button class="bnav-btn on" onclick="go('ledger')"><span class="icon">💰</span>Money</button>
+  </div>
+</div>
+
+<!-- ══ 9 POINT GAME ══ -->
+<div id="s-nine" class="scr">
+  <div class="hdr">
+    <button class="back" onclick="go('nine-setup')">‹</button>
+    <div><div class="hdr-title" style="color:var(--amberl)">9 Point Game</div><div class="hdr-sub" id="nine-meta"></div></div>
+    <div class="hdr-actions"><button class="hbtn" style="border-color:rgba(184,134,11,.4);background:rgba(184,134,11,.1);color:var(--amberl)" onclick="go('nine-ledger')">Money</button></div>
+  </div>
+  <div style="background:var(--g2);border-bottom:1px solid var(--bd);padding:8px 14px;flex-shrink:0;display:flex;gap:6px">
+    <button id="ntab-front" onclick="showNineNine('front')" style="flex:1;padding:7px;border-radius:8px;border:1px solid var(--amberl);background:rgba(184,134,11,.15);color:var(--amberl);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Front 9</button>
+    <button id="ntab-back"  onclick="showNineNine('back')"  style="flex:1;padding:7px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--txm);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Back 9</button>
+  </div>
+  <div class="body" id="nine-body"></div>
+</div>
+
+<!-- ══ 9 POINT SETUP ══ -->
+<div id="s-nine-setup" class="scr">
+  <div class="hdr">
+    <div><div class="hdr-title" style="color:var(--amberl)">9 Point Game</div><div class="hdr-sub">Setup</div></div>
+    <div class="hdr-actions"><button class="hbtn" style="border-color:rgba(184,134,11,.4);background:rgba(184,134,11,.1);color:var(--amberl)" onclick="startNineGame()">Start →</button></div>
+  </div>
+  <div class="body" id="nine-setup-body"></div>
+</div>
+
+<!-- ══ 9 POINT LEDGER ══ -->
+<div id="s-nine-ledger" class="scr">
+  <div class="hdr">
+    <button class="back" onclick="go('nine')">‹</button>
+    <div><div class="hdr-title" style="color:var(--amberl)">Money</div><div class="hdr-sub">9 Point settlement</div></div>
+  </div>
+  <div class="body" id="nine-ledger-body"></div>
+</div>
+
+<!-- ══ PRESS MODAL ══ -->
+<div class="modal" id="press-modal">
+  <div class="modal-sheet">
+    <div class="modal-title">Add Press</div>
+    <div class="mrow"><label>Match</label>
+      <select class="msel" id="pm-match">
+        <option value="1">Match 1 — vs A + B</option>
+        <option value="2">Match 2 — vs A + C</option>
+        <option value="3">Match 3 — vs B + C</option>
+      </select>
+    </div>
+    <div class="mrow"><label>Segment</label>
+      <select class="msel" id="pm-seg">
+        <option value="front">Front 9 ($5)</option>
+        <option value="back">Back 9 ($5)</option>
+        <option value="overall">Overall 18 ($5)</option>
+      </select>
+    </div>
+    <div class="mrow"><label>Starts hole</label>
+      <select class="msel" id="pm-hole"></select>
+    </div>
+    <div class="mrow"><label>Press of P#</label>
+      <select class="msel" id="pm-parent"><option value="">— new press —</option></select>
+    </div>
+    <div class="modal-btns">
+      <button class="mcancel" onclick="closePressModal()">Cancel</button>
+      <button class="mconfirm" onclick="confirmPress()">Add Press</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const HOLES=[
+  {h:1,par:4,hdcp:2},{h:2,par:4,hdcp:6},{h:3,par:4,hdcp:12},
+  {h:4,par:3,hdcp:18},{h:5,par:4,hdcp:4},{h:6,par:4,hdcp:10},
+  {h:7,par:3,hdcp:14},{h:8,par:5,hdcp:8},{h:9,par:4,hdcp:16},
+  {h:10,par:5,hdcp:5},{h:11,par:3,hdcp:15},{h:12,par:5,hdcp:7},
+  {h:13,par:5,hdcp:13},{h:14,par:4,hdcp:11},{h:15,par:4,hdcp:9},
+  {h:16,par:4,hdcp:1},{h:17,par:3,hdcp:17},{h:18,par:4,hdcp:3},
+];
+const PAR3S=[4,7,11,17];
+const TEES=[
+  {name:'Gold',color:'#c8a81b',yards:6696,rating:72.3,slope:136},
+  {name:'Blue',color:'#2166c0',yards:6394,rating:70.9,slope:133},
+  {name:'Green',color:'#2d8c45',yards:5859,rating:68.5,slope:128},
+  {name:'White',color:'#aaaaaa',yards:5527,rating:66.8,slope:124},
+  {name:'Red',color:'#c0392b',yards:4864,rating:67.1,slope:115},
+];
+// Match 1: W vs A+B (C sits), Match 2: W vs A+C (B sits), Match 3: W vs B+C (A sits)
+const MATCHES={
+  1:{wheel:['W1','W2'],opp:['A','B'],sits:'C'},
+  2:{wheel:['W1','W2'],opp:['A','C'],sits:'B'},
+  3:{wheel:['W1','W2'],opp:['B','C'],sits:'A'},
+};
+const SEGS={front:{holes:[1,2,3,4,5,6,7,8,9]},back:{holes:[10,11,12,13,14,15,16,17,18]},overall:{holes:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]}};
+function matchLabel(m){return MATCHES[m].opp.map(id=>pName(id)).join(' + ');}
+const STAKE=5;
+
+let S={
+  date:'',tee:'Gold',nine:'front',
+  mode:'wheel', // 'wheel' or 'nine'
+  players:[
+    {id:'W1',role:'wheel',name:'W1',hdcp:0},
+    {id:'W2',role:'wheel',name:'W2',hdcp:0},
+    {id:'A', role:'opp', name:'A', hdcp:0},
+    {id:'B', role:'opp', name:'B', hdcp:0},
+    {id:'C', role:'opp', name:'C', hdcp:0},
+  ],
+  scores:{},      // `${hole}-${pid}` → gross int
+  greenies:{},    // `${hole}` → pid (closest) or null
+  presses:[],     // {id,match,seg,startHole,parentId}
+  // 9 Point Game state
+  ninePlayers:[], // 3 player ids selected for 9pt game
+  nineNine:'front',
+  ninePresses:{}, // pid → hole# they pressed on (or null)
+  nineGreenies:{},// hole → pid (closest) — separate from wheel greenies
+};
+
+function save(){try{localStorage.setItem('wheel-s',JSON.stringify(S));}catch(e){}}
+function load(){try{const d=localStorage.getItem('wheel-s');if(d)S=JSON.parse(d);}catch(e){}}
+load();
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function go(name){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  const el=document.getElementById('s-'+name);
+  if(el)el.classList.add('on');
+  if(name==='score')renderScore();
+  if(name==='presses')renderPresses();
+  if(name==='ledger')renderLedger();
+  if(name==='nine')renderNineGame();
+  if(name==='nine-setup')initNineSetup();
+  if(name==='nine-ledger')renderNineLedger();
+}
+
+// ══════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════
+function initSetup(){
+  const body=document.getElementById('setup-body');
+  const today=new Date().toISOString().split('T')[0];
+
+  body.innerHTML=`
+    <div class="slabel" style="margin-top:0">Game Mode</div>
+    <div class="mode-switch">
+      <button class="mode-btn ${S.mode==='wheel'?'on':''}" id="mode-wheel" onclick="setMode('wheel')">⛳ The Wheel — 5 players</button>
+      <button class="mode-btn ${S.mode==='nine'?'on':''}" id="mode-nine" onclick="setMode('nine')">🔢 9 Point — 3 players</button>
+    </div>
+    <div class="hint">The Wheel and 9 Point are never played simultaneously</div>
+
+    <div id="wheel-setup-section">
+      <div class="slabel">Date</div>
+      <input type="date" class="inp" id="d-date" value="${S.date||today}" oninput="S.date=this.value;save()">
+      <div class="slabel">Tees</div>
+      <div class="tee-wrap" id="tee-wrap"></div>
+      <div class="slabel">Wheel Team</div>
+      <div class="card" id="wheel-cards"></div>
+      <div class="slabel">Opponents</div>
+      <div class="card" id="opp-cards"></div>
+      <div class="slabel">Match Pairings — The Wheel</div>
+      <div class="card mkey">
+        <div class="mkc lbl"></div><div class="mkc hd">Match 1</div><div class="mkc hd">Match 2</div><div class="mkc hd">Match 3</div>
+        <div class="mkc lbl">Wheel</div><div class="mkc ws">W1+W2</div><div class="mkc ws">W1+W2</div><div class="mkc ws">W1+W2</div>
+        <div class="mkc lbl">Opponents</div><div class="mkc os">A+B</div><div class="mkc os">A+C</div><div class="mkc os">B+C</div>
+        <div class="mkc lbl mkey-last">Sits out</div><div class="mkc mkey-last" style="color:var(--txd);font-size:11px">C</div><div class="mkc mkey-last" style="color:var(--txd);font-size:11px">B</div><div class="mkc mkey-last" style="color:var(--txd);font-size:11px">A</div>
+      </div>
+      <div class="hint">5·5·5 format: $5 per match per segment (front/back/18) = $45 base</div>
+      <button class="startbtn" onclick="startRound()">Tee it up →</button>
+    </div>
+
+    <div id="nine-setup-section" style="display:none">
+      <div class="slabel">Date</div>
+      <input type="date" class="inp" id="d-date-nine" value="${S.date||today}" oninput="S.date=this.value;save()">
+      <div class="slabel">Tees</div>
+      <div class="tee-wrap" id="tee-wrap-nine"></div>
+      <button class="startbtn" style="background:rgba(184,134,11,.3);border:1px solid rgba(184,134,11,.5);margin-top:20px" onclick="go('nine-setup')">Set Up 9 Point Game →</button>
+    </div>
+    <div style="height:24px"></div>
+  `;
+
+  // Show correct section
+  document.getElementById('wheel-setup-section').style.display=S.mode==='wheel'?'block':'none';
+  document.getElementById('nine-setup-section').style.display=S.mode==='nine'?'block':'none';
+
+  // Tees — Wheel
+  const tw=document.getElementById('tee-wrap');
+  if(tw) TEES.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='tbtn'+(S.tee===t.name?' on':'');
+    b.innerHTML=`<span class="tdot" style="background:${t.color}"></span>${t.name} <span style="color:var(--txd);font-size:11px">${t.yards.toLocaleString()}y</span>`;
+    b.onclick=()=>{S.tee=t.name;save();initSetup();};
+    tw.appendChild(b);
+  });
+
+  // Tees — Nine
+  const tn=document.getElementById('tee-wrap-nine');
+  if(tn) TEES.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='tbtn'+(S.tee===t.name?' on':'');
+    b.innerHTML=`<span class="tdot" style="background:${t.color}"></span>${t.name} <span style="color:var(--txd);font-size:11px">${t.yards.toLocaleString()}y</span>`;
+    b.onclick=()=>{S.tee=t.name;save();initSetup();};
+    tn.appendChild(b);
+  });
+
+  // Player cards (wheel mode only)
+  if(S.mode==='wheel'){
+    const wc=document.getElementById('wheel-cards');
+    if(wc){['W1','W2'].forEach((id,i)=>wc.appendChild(playerRow(id,'bw',i<1)));}
+    const oc=document.getElementById('opp-cards');
+    if(oc){['A','B','C'].forEach((id,i)=>oc.appendChild(playerRow(id,'bo',i<2)));}
+  }
+}
+
+function setMode(m){S.mode=m;save();initSetup();}
+
+function playerRow(id,badgeClass,notLast){
+  const p=S.players.find(x=>x.id===id);
+  const div=document.createElement('div');
+  div.className='card-row';
+  if(!notLast) div.style.borderBottom='none';
+  div.innerHTML=`
+    <div class="badge ${badgeClass}">${id}</div>
+    <div class="pinputs">
+      <input class="inp" type="text" placeholder="Name" value="${p.name===id?'':p.name}"
+        oninput="setPName('${id}',this.value)">
+      <input class="inp inp-sm" type="number" min="0" max="54" placeholder="Hdcp" value="${p.hdcp||''}"
+        oninput="setPHdcp('${id}',+this.value)">
+    </div>`;
+  return div;
+}
+function setPName(id,v){const p=S.players.find(x=>x.id===id);if(p){p.name=v||id;save();}}
+function setPHdcp(id,v){const p=S.players.find(x=>x.id===id);if(p){p.hdcp=isNaN(v)?0:v;save();}}
+function pName(id){return S.players.find(x=>x.id===id)?.name||id;}
+
+function startRound(){S.date=document.getElementById('d-date')?.value||S.date;save();go('score');}
+
+// ══════════════════════════════════════════
+// SCORING HELPERS
+// ══════════════════════════════════════════
+function sk(h,id){return `${h}-${id}`;}
+function getScore(h,id){return S.scores[sk(h,id)];}
+function setScore(h,id,v){
+  if(v===null||v===undefined||isNaN(v)||v<1)delete S.scores[sk(h,id)];
+  else S.scores[sk(h,id)]=v;
+  save();
+}
+
+function getPops(pid,matchNum){
+  const m=MATCHES[matchNum];
+  const ids=[...m.wheel,...m.opp];
+  const mn=Math.min(...ids.map(i=>S.players.find(p=>p.id===i)?.hdcp||0));
+  return (S.players.find(p=>p.id===pid)?.hdcp||0)-mn;
+}
+
+function netScore(h,pid,matchNum){
+  const g=getScore(h,pid);
+  if(g===undefined)return undefined;
+  const pops=getPops(pid,matchNum);
+  const hd=HOLES[h-1].hdcp;
+  const strokes=pops>=hd?1:0;
+  return g-strokes;
+}
+
+function teamLow(h,matchNum,side){
+  const ids=MATCHES[matchNum][side==='wheel'?'wheel':'opp'];
+  const nets=ids.map(id=>netScore(h,id,matchNum)).filter(x=>x!==undefined);
+  return nets.length?Math.min(...nets):undefined;
+}
+
+// Score a segment: returns +N (wheel wins N holes), -N (opp wins N holes), running from startHole within holes list
+function segScore(matchNum,holes,startHole=1){
+  let s=0;
+  for(const h of holes){
+    if(h<startHole)continue;
+    const wl=teamLow(h,matchNum,'wheel'),ol=teamLow(h,matchNum,'opp');
+    if(wl===undefined||ol===undefined)continue;
+    if(wl<ol)s++;else if(ol<wl)s--;
+  }
+  return s;
+}
+
+function scoreClass(v,par){
+  if(v===undefined)return 'v-empty';
+  const d=v-par;
+  if(d<=-2)return 'v-eagle';if(d===-1)return 'v-birdie';if(d===0)return 'v-par';if(d===1)return 'v-bogey';return 'v-double';
+}
+function msClass(v){return v>0?'ms-w':v<0?'ms-o':'ms-e';}
+function msText(v,mn){return v===0?`M${mn} E`:(v>0?`M${mn} W+${Math.abs(v)}`:`M${mn} O+${Math.abs(v)}`);}
+
+// ══════════════════════════════════════════
+// SCORECARD RENDER
+// ══════════════════════════════════════════
+function showNine(nine){
+  S.nine=nine;save();
+  document.getElementById('tab-front').style.cssText=nine==='front'?'flex:1;padding:7px;border-radius:8px;border:1px solid var(--g4);background:var(--g3);color:var(--gp);font-size:12px;font-weight:500;cursor:pointer;font-family:DM Sans,sans-serif':'flex:1;padding:7px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--txm);font-size:12px;font-weight:500;cursor:pointer;font-family:DM Sans,sans-serif';
+  document.getElementById('tab-back').style.cssText=nine==='back'?'flex:1;padding:7px;border-radius:8px;border:1px solid var(--g4);background:var(--g3);color:var(--gp);font-size:12px;font-weight:500;cursor:pointer;font-family:DM Sans,sans-serif':'flex:1;padding:7px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--txm);font-size:12px;font-weight:500;cursor:pointer;font-family:DM Sans,sans-serif';
+  renderScore();
+}
+
+function renderScore(){
+  const tee=TEES.find(t=>t.name===S.tee)||TEES[0];
+  document.getElementById('round-meta').textContent=`${S.date||'Today'} · ${tee.name} · ${tee.yards.toLocaleString()} yds`;
+  const body=document.getElementById('score-body');
+  body.innerHTML='';
+  const hset=S.nine==='front'?HOLES.slice(0,9):HOLES.slice(9,18);
+  hset.forEach(hd=>body.appendChild(buildHoleCard(hd)));
+}
+
+function buildHoleCard(hd){
+  const isP3=PAR3S.includes(hd.h);
+  const div=document.createElement('div');
+  div.className='hcard';div.id=`hc-${hd.h}`;
+
+  // Header
+  const hdr=document.createElement('div');
+  hdr.className='hcard-hdr';
+  hdr.onclick=()=>toggleHole(hd.h);
+
+  const scores_m=[1,2,3].map(m=>segScore(m,SEGS[S.nine==='front'?'front':'back'].holes,1));
+
+  hdr.innerHTML=`
+    <div class="hnum">${hd.h}</div>
+    <div class="hinfo">
+      <div class="hpar">Par <b>${hd.par}</b>${isP3?'<span class="p3-flag">Greenie</span>':''}</div>
+      <span class="hhdcp">Hdcp ${hd.hdcp}</span>
+    </div>
+    <div class="hmscore">
+      ${[1,2,3].map(m=>{const v=segScore(m,SEGS[S.nine==='front'?'front':'back'].holes.filter(x=>x<=hd.h));return `<div class="ms-pill ${msClass(v)}">${msText(v,m)}</div>`;}).join('')}
+    </div>
+    <div class="chevron">›</div>`;
+
+  // Body
+  const body=document.createElement('div');
+  body.className='hbody';body.id=`hb-${hd.h}`;
+
+  // Score grid
+  const grid=document.createElement('div');
+  grid.className='score-grid';
+
+  // Wheel group
+  const wg=document.createElement('div');wg.className='sg-group';
+  wg.innerHTML=`<div class="sg-lbl">Wheel</div>`;
+  const wp=document.createElement('div');wp.className='sg-players';
+  ['W1','W2'].forEach(id=>wp.appendChild(buildScoreRow(hd,id,1)));
+  wg.appendChild(wp);
+  // wheel low
+  const wlv=buildLowEl(hd,'wheel');
+  wg.appendChild(wlv);
+
+  // Opp group
+  const og=document.createElement('div');og.className='sg-group';
+  og.innerHTML=`<div class="sg-lbl">Opponents</div>`;
+  const op=document.createElement('div');op.className='sg-players';
+  ['A','B','C'].forEach(id=>op.appendChild(buildScoreRow(hd,id,null)));
+  og.appendChild(op);
+  const olv=buildLowEl(hd,'opp');
+  og.appendChild(olv);
+
+  grid.append(wg,og);
+
+  // Match results
+  const mr=document.createElement('div');mr.className='mresult-row';
+  for(let m=1;m<=3;m++){
+    const v=segScore(m,SEGS[S.nine==='front'?'front':'back'].holes.filter(x=>x<=hd.h));
+    const el=document.createElement('div');el.className='mres';
+    const abs=Math.abs(v);const cls=v>0?'w':v<0?'o':'e';const txt=v===0?'Even':(v>0?`W +${abs}`:`O +${abs}`);
+    el.innerHTML=`<div class="mres-lbl">M${m}</div><div class="mres-val ${cls}">${txt}</div>`;
+    mr.appendChild(el);
+  }
+
+  body.append(grid,mr);
+
+  // Greenie
+  if(isP3){
+    body.appendChild(buildGreenieSection(hd));
+  }
+
+  // Press button
+  const pb=document.createElement('button');
+  pb.className='press-trigger';
+  pb.textContent='⚡ Press on this hole';
+  pb.onclick=e=>{e.stopPropagation();openPressModal(hd.h);};
+  body.appendChild(pb);
+
+  div.append(hdr,body);
+  return div;
+}
+
+function buildScoreRow(hd,pid,matchForPops){
+  const score=getScore(hd.h,pid);
+  const hasPops=matchForPops&&getPops(pid,matchForPops)>0;
+  const row=document.createElement('div');row.className='srow';row.id=`sr-${hd.h}-${pid}`;
+  const nm=document.createElement('div');nm.className='srow-name'+(hasPops?' pops':'');nm.textContent=pName(pid);
+  const st=document.createElement('div');st.className='stepper';
+  const m=document.createElement('button');m.className='sbtn';m.textContent='−';
+  m.onclick=e=>{e.stopPropagation();adj(hd,pid,-1);};
+  const v=document.createElement('div');v.className='sval '+scoreClass(score,hd.par);v.id=`sv-${hd.h}-${pid}`;
+  v.textContent=score!==undefined?score:'·';
+  const p=document.createElement('button');p.className='sbtn';p.textContent='+';
+  p.onclick=e=>{e.stopPropagation();adj(hd,pid,1);};
+  st.append(m,v,p);row.append(nm,st);
+  return row;
+}
+
+function buildLowEl(hd,side){
+  const div=document.createElement('div');div.className='low-row';div.id=`low-${hd.h}-${side}`;
+  refreshLow(div,hd,side);
+  return div;
+}
+
+function refreshLow(el,hd,side){
+  const parts=[];
+  for(let m=1;m<=3;m++){
+    const inMatch=[...(side==='wheel'?MATCHES[m].wheel:MATCHES[m].opp)];
+    const v=teamLow(hd.h,m,side);
+    if(v!==undefined)parts.push(`M${m}:${v}`);
+  }
+  el.innerHTML=`<span class="low-lbl">Net low</span><span class="low-vals">${parts.length?parts.join(' '):' —'}</span>`;
+}
+
+function adj(hd,pid,delta){
+  const cur=getScore(hd.h,pid);
+  const nv=cur===undefined?hd.par+delta:cur+delta;
+  if(nv<1)return;
+  setScore(hd.h,pid,nv);
+  // Patch DOM
+  const vel=document.getElementById(`sv-${hd.h}-${pid}`);
+  if(vel){vel.textContent=nv;vel.className='sval '+scoreClass(nv,hd.par);}
+  // Refresh lows
+  ['wheel','opp'].forEach(side=>{
+    const lel=document.getElementById(`low-${hd.h}-${side}`);
+    if(lel)refreshLow(lel,hd,side);
+  });
+  // Refresh match results & header pills
+  refreshHoleCard(hd.h);
+  // Refresh greenie result if par 3
+  if(PAR3S.includes(hd.h))refreshGreenieResult(hd.h);
+  // Check for auto press trigger
+  checkAutoPress(hd.h);
+}
+
+// ── TOAST ──
+let toastTimer=null;
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+// ── AUTO PRESS ──
+// Fires when either side hits exactly -2 in a front or back 9 main match
+// Only applies to original front/back matches (not presses, not overall)
+// Key: `auto-${seg}-${matchNum}-${triggerHole}` stored in S.autoPresses to avoid double-firing
+function checkAutoPress(scoredHole){
+  if(!S.autoPresses)S.autoPresses={};
+  const seg=scoredHole<=9?'front':'back';
+  const segHoles=SEGS[seg].holes;
+  // Only check holes within this segment (not last hole — no next hole to press from)
+  if(!segHoles.includes(scoredHole))return;
+  const nextHole=scoredHole+1;
+  if(nextHole>18)return;
+  if(!segHoles.includes(nextHole))return; // don't cross nines
+
+  for(let m=1;m<=3;m++){
+    const key=`${seg}-${m}-${scoredHole}`;
+    if(S.autoPresses[key])continue; // already fired this one
+
+    // Only score holes up to and including scoredHole in this segment
+    const v=segScore(m,segHoles.filter(h=>h<=scoredHole));
+
+    // v < 0 means opp leads (wheel is down), v > 0 means wheel leads (opp is down)
+    if(Math.abs(v)===2){
+      // Check no existing auto press already active for this match+seg starting at or after nextHole
+      const alreadyActive=S.presses.some(p=>
+        p.match===m && p.seg===seg && p.parentId===null && p.startHole>=nextHole && p._auto
+      );
+      if(alreadyActive)continue;
+
+      // Fire the press
+      const pressId=Date.now()+m; // unique enough
+      S.presses.push({id:pressId,match:m,seg,startHole:nextHole,parentId:null,_auto:true});
+      S.autoPresses[key]=true;
+      save();
+
+      const downSide=v<0?'Wheel':'Opps ('+matchLabel(m)+')';
+      showToast(`⚡ Auto press fired — ${downSide} 2 down in M${m} ${seg}. Press starts hole ${nextHole}.`);
+    }
+  }
+}
+
+function refreshHoleCard(hole){
+  const hd=HOLES[hole-1];
+  // Update match result pills
+  const mr=document.querySelector(`#hc-${hole} .mresult-row`);
+  if(mr){
+    mr.querySelectorAll('.mres').forEach((el,i)=>{
+      const m=i+1;
+      const v=segScore(m,SEGS[S.nine==='front'?'front':'back'].holes.filter(x=>x<=hole));
+      const abs=Math.abs(v);const cls=v>0?'w':v<0?'o':'e';const txt=v===0?'Even':(v>0?`W +${abs}`:`O +${abs}`);
+      el.querySelector('.mres-val').className=`mres-val ${cls}`;
+      el.querySelector('.mres-val').textContent=txt;
+    });
+  }
+  // Update header pills
+  const hdr=document.querySelector(`#hc-${hole} .hmscore`);
+  if(hdr){
+    hdr.innerHTML=[1,2,3].map(m=>{
+      const v=segScore(m,SEGS[S.nine==='front'?'front':'back'].holes.filter(x=>x<=hole));
+      return `<div class="ms-pill ${msClass(v)}">${msText(v,m)}</div>`;
+    }).join('');
+  }
+}
+
+function toggleHole(hole){
+  const card=document.getElementById(`hc-${hole}`);
+  const body=document.getElementById(`hb-${hole}`);
+  if(!card||!body)return;
+  const isOpen=card.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.hcard').forEach(c=>c.classList.remove('open'));
+  if(!isOpen){card.classList.add('open');body.scrollIntoView({behavior:'smooth',block:'nearest'});}
+}
+
+// ══════════════════════════════════════════
+// GREENIES
+// ══════════════════════════════════════════
+function buildGreenieSection(hd){
+  const sec=document.createElement('div');sec.className='greenie-section';sec.id=`gs-${hd.h}`;
+  sec.innerHTML=`<div class="g-title">🏌 Greenie — hole ${hd.h}</div>`;
+  const list=document.createElement('div');list.className='g-players';
+  ['W1','W2','A','B','C'].forEach(pid=>{
+    const row=document.createElement('div');
+    row.className='g-row'+(S.greenies[hd.h]===pid?' closest':'');
+    row.id=`gr-${hd.h}-${pid}`;
+    row.onclick=()=>setGreenie(hd.h,pid);
+    const score=getScore(hd.h,pid);
+    const resultTxt=greenieResultText(hd,pid);
+    row.innerHTML=`
+      <div class="g-radio"><div class="g-radio-dot"></div></div>
+      <div class="g-name">${pName(pid)}</div>
+      <div class="g-result ${resultTxt.cls}" id="gr-res-${hd.h}-${pid}">${resultTxt.txt}</div>`;
+    list.appendChild(row);
+  });
+  sec.appendChild(list);
+  const hint=document.createElement('div');hint.className='hint';hint.style.color='var(--amberl)';
+  hint.textContent='Tap player to mark closest to pin';
+  sec.appendChild(hint);
+  return sec;
+}
+
+function greenieResultText(hd,pid){
+  const score=getScore(hd.h,pid);
+  const closest=S.greenies[hd.h];
+  if(closest!==pid)return{cls:'g-none',txt:''};
+  if(score===undefined)return{cls:'g-none',txt:'(no score)'};
+  const diff=score-hd.par;
+  if(diff<=-2)return{cls:'g-win',txt:'Eagle +$80'};
+  if(diff===-1)return{cls:'g-win',txt:'Birdie +$40'};
+  if(diff===0)return{cls:'g-win',txt:'Par +$20'};
+  return{cls:'g-lose',txt:'Bogey −$40'};
+}
+
+function setGreenie(hole,pid){
+  S.greenies[hole]=S.greenies[hole]===pid?null:pid;
+  save();
+  // Refresh all rows for this hole
+  ['W1','W2','A','B','C'].forEach(id=>{
+    const row=document.getElementById(`gr-${hole}-${id}`);
+    if(!row)return;
+    row.className='g-row'+(S.greenies[hole]===id?' closest':'');
+    const hd=HOLES[hole-1];
+    const rt=greenieResultText(hd,id);
+    const rel=document.getElementById(`gr-res-${hole}-${id}`);
+    if(rel){rel.className=`g-result ${rt.cls}`;rel.textContent=rt.txt;}
+  });
+}
+
+function refreshGreenieResult(hole){
+  const hd=HOLES[hole-1];
+  ['W1','W2','A','B','C'].forEach(id=>{
+    const rt=greenieResultText(hd,id);
+    const rel=document.getElementById(`gr-res-${hole}-${id}`);
+    if(rel){rel.className=`g-result ${rt.cls}`;rel.textContent=rt.txt;}
+  });
+}
+
+// ══════════════════════════════════════════
+// PRESSES
+// ══════════════════════════════════════════
+function openPressModal(holeNum){
+  // Populate match options with real names
+  const ms=document.getElementById('pm-match');
+  ms.innerHTML='';
+  [1,2,3].forEach(m=>{
+    const o=document.createElement('option');o.value=m;
+    o.textContent=`Match ${m} — vs ${matchLabel(m)}`;
+    ms.appendChild(o);
+  });
+  // Populate hole options
+  const hs=document.getElementById('pm-hole');
+  hs.innerHTML='';
+  const min=holeNum||2;
+  for(let i=min;i<=18;i++){const o=document.createElement('option');o.value=i;o.textContent=i;hs.appendChild(o);}
+  if(holeNum)hs.value=holeNum;
+  // Populate parent options
+  const pp=document.getElementById('pm-parent');
+  pp.innerHTML='<option value="">— new press —</option>';
+  S.presses.forEach(p=>{
+    const o=document.createElement('option');o.value=p.id;
+    o.textContent=`P${p.id} (vs ${matchLabel(p.match)} · ${p.seg} · hole ${p.startHole})`;
+    pp.appendChild(o);
+  });
+  document.getElementById('press-modal').classList.add('on');
+}
+function closePressModal(){document.getElementById('press-modal').classList.remove('on');}
+function confirmPress(){
+  const match=+document.getElementById('pm-match').value;
+  const seg=document.getElementById('pm-seg').value;
+  const startHole=+document.getElementById('pm-hole').value;
+  const parentId=document.getElementById('pm-parent').value||null;
+  const id=Date.now();
+  S.presses.push({id,match,seg,startHole,parentId});
+  save();closePressModal();renderPresses();
+}
+
+function pressScore(press,throughHole){
+  const holes=SEGS[press.seg].holes.filter(h=>h>=press.startHole&&h<=throughHole);
+  let s=0;
+  for(const h of holes){
+    const wl=teamLow(h,press.match,'wheel'),ol=teamLow(h,press.match,'opp');
+    if(wl===undefined||ol===undefined)continue;
+    if(wl<ol)s++;else if(ol<wl)s--;
+  }
+  return s;
+}
+
+function renderPresses(){
+  const body=document.getElementById('press-body');
+  body.innerHTML='';
+  if(!S.presses.length){
+    body.innerHTML='<div class="no-presses">No presses yet.<br>Add one from the scorecard or tap + Press above.</div>';
+    return;
+  }
+  S.presses.forEach((press,idx)=>{
+    const ps=pressScore(press,18);
+    const card=document.createElement('div');card.className='press-card';
+    const parentTxt=press.parentId?`Press of P${press.parentId}`:'Original press';
+    const autoBadge=press._auto?'<span style="font-size:10px;background:rgba(107,63,160,.35);color:var(--purpp);padding:2px 7px;border-radius:8px;margin-left:6px;letter-spacing:.04em">AUTO</span>':'';
+    const abs=Math.abs(ps);const cls=ps>0?'w':ps<0?'o':'e';
+    const txt=ps===0?'Even':(ps>0?`W +${abs}`:`O +${abs}`);
+    card.innerHTML=`
+      <div class="press-hdr">
+        <div class="press-num">P${idx+1}${autoBadge}</div>
+        <div class="press-meta">${matchLabel(press.match)} · ${press.seg} · starts hole ${press.startHole}</div>
+        <button class="press-del" onclick="deletePress(${press.id})">×</button>
+      </div>
+      <div class="press-body">
+        <div class="press-info-grid">
+          <div class="pinfo"><div class="pinfo-lbl">Match</div><div class="pinfo-val" style="font-size:12px">${matchLabel(press.match)}</div></div>
+          <div class="pinfo"><div class="pinfo-lbl">Segment</div><div class="pinfo-val">${press.seg}</div></div>
+          <div class="pinfo"><div class="pinfo-lbl">Starts</div><div class="pinfo-val">Hole ${press.startHole}</div></div>
+          <div class="pinfo"><div class="pinfo-lbl">Type</div><div class="pinfo-val" style="font-size:12px">${parentTxt}</div></div>
+        </div>
+        <div class="press-score-row">
+          <span class="ps-lbl">Running score</span>
+          <span class="ps-val ${cls}">${txt}</span>
+        </div>
+      </div>`;
+    body.appendChild(card);
+  });
+  const addbtn=document.createElement('button');addbtn.className='add-press-btn';
+  addbtn.textContent='+ Add Another Press';addbtn.onclick=()=>openPressModal(null);
+  body.appendChild(addbtn);
+}
+
+function deletePress(id){S.presses=S.presses.filter(p=>p.id!==id);save();renderPresses();}
+
+// ══════════════════════════════════════════
+// MONEY LEDGER
+// ══════════════════════════════════════════
+function segResult(matchNum,seg){
+  // Returns +1 wheel wins, -1 opp wins, 0 halved
+  const holes=SEGS[seg].holes;
+  const s=segScore(matchNum,holes);
+  return s>0?1:s<0?-1:0;
+}
+
+function calcMoney(){
+  // money[pid] = net dollars
+  const money={W1:0,W2:0,A:0,B:0,C:0};
+
+  // ── 5·5·5 base matches ──
+  const segs=['front','back','overall'];
+  segs.forEach(seg=>{
+    for(let m=1;m<=3;m++){
+      const r=segResult(m,seg); // +1 wheel, -1 opp, 0 halved
+      const wids=MATCHES[m].wheel;   // W1, W2
+      const oids=MATCHES[m].opp;    // e.g. A,B
+      if(r===0)return; // halved = no money
+      if(r===1){
+        // Wheel wins: each opp pays $5, split between W1+W2
+        oids.forEach(oid=>{
+          money[oid]-=STAKE;
+          wids.forEach(wid=>money[wid]+=STAKE/2);
+        });
+      } else {
+        // Opp wins: wheel pays each opp $5, W1+W2 split loss
+        oids.forEach(oid=>{
+          money[oid]+=STAKE;
+          wids.forEach(wid=>money[wid]-=STAKE/2);
+        });
+      }
+    }
+  });
+
+  // ── Presses ──
+  S.presses.forEach(press=>{
+    const ps=pressScore(press,18);
+    const r=ps>0?1:ps<0?-1:0;
+    if(r===0)return;
+    const wids=MATCHES[press.match].wheel;
+    const oids=MATCHES[press.match].opp;
+    if(r===1){
+      oids.forEach(oid=>{money[oid]-=STAKE;wids.forEach(wid=>money[wid]+=STAKE/2);});
+    } else {
+      oids.forEach(oid=>{money[oid]+=STAKE;wids.forEach(wid=>money[wid]-=STAKE/2);});
+    }
+  });
+
+  // ── Greenies ──
+  // Eagle +$20 from each other (4×$20), Birdie +$10, Par +$5, Bogey −$10 from winner to each
+  PAR3S.forEach(hole=>{
+    const pid=S.greenies[hole];
+    if(!pid)return;
+    const score=getScore(hole,pid);
+    if(score===undefined)return;
+    const hd=HOLES[hole-1];
+    const diff=score-hd.par;
+    const others=['W1','W2','A','B','C'].filter(id=>id!==pid);
+    let amt=0;
+    if(diff<=-2)amt=20;
+    else if(diff===-1)amt=10;
+    else if(diff===0)amt=5;
+    else amt=-10; // bogey+ = closest pays others
+    others.forEach(oid=>{money[oid]-=amt;});
+    money[pid]+=amt*4;
+  });
+
+  return money;
+}
+
+function simplifyDebts(money){
+  // Net settlement: minimize transactions
+  const pids=['W1','W2','A','B','C'];
+  const pos=[],neg=[];
+  pids.forEach(id=>{
+    const v=money[id];
+    if(v>0.01)pos.push({id,v});
+    else if(v<-0.01)neg.push({id,v:-v});
+  });
+  const txns=[];
+  let pi=0,ni=0;
+  while(pi<pos.length&&ni<neg.length){
+    const p=pos[pi],n=neg[ni];
+    const amt=Math.min(p.v,n.v);
+    txns.push({from:n.id,to:p.id,amt});
+    p.v-=amt;n.v-=amt;
+    if(p.v<0.01)pi++;if(n.v<0.01)ni++;
+  }
+  return txns;
+}
+
+function renderLedger(){
+  const body=document.getElementById('ledger-body');body.innerHTML='';
+  const money=calcMoney();
+
+  // ── Per-player net ──
+  const mc=document.createElement('div');mc.className='money-card';
+  mc.innerHTML='<div class="money-hdr">Net standings</div>';
+  ['W1','W2','A','B','C'].forEach(pid=>{
+    const v=money[pid];
+    const cls=v>0?'pos':v<0?'neg':'zer';
+    const txt=v>=0?`+$${v.toFixed(2)}`:`−$${Math.abs(v).toFixed(2)}`;
+    const row=document.createElement('div');row.className='money-row';
+    row.innerHTML=`<div class="money-name">${pName(pid)}</div><div class="money-net ${cls}">${txt}</div>`;
+    mc.appendChild(row);
+  });
+  body.appendChild(mc);
+
+  // ── Settlement ──
+  const txns=simplifyDebts(money);
+  if(txns.length){
+    const oc=document.createElement('div');oc.className='owes-card';
+    oc.innerHTML='<div class="owes-hdr">Settlement</div>';
+    txns.forEach(t=>{
+      const row=document.createElement('div');row.className='owes-row';
+      row.innerHTML=`<div class="owes-from">${pName(t.from)}</div><div class="owes-arrow">→</div><div class="owes-to">${pName(t.to)}</div><div class="owes-amt">$${t.amt.toFixed(2)}</div>`;
+      oc.appendChild(row);
+    });
+    body.appendChild(oc);
+  }
+
+  // ── Greenies detail ──
+  const gc=document.createElement('div');gc.className='greenie-ledger';
+  gc.innerHTML='<div class="gl-hdr">Greenie results</div>';
+  let hasGreenie=false;
+  PAR3S.forEach(hole=>{
+    const pid=S.greenies[hole];
+    if(!pid)return;hasGreenie=true;
+    const score=getScore(hole,pid);
+    const hd=HOLES[hole-1];
+    const diff=score!==undefined?score-hd.par:null;
+    let resultStr='(no score)',cls='';
+    if(diff!==null){
+      if(diff<=-2){resultStr=`Eagle — collects $${20*4}`;cls='win';}
+      else if(diff===-1){resultStr=`Birdie — collects $${10*4}`;cls='win';}
+      else if(diff===0){resultStr=`Par — collects $${5*4}`;cls='win';}
+      else{resultStr=`Bogey — pays $${10*4}`;cls='lose';}
+    }
+    const row=document.createElement('div');row.className='gl-row';
+    row.innerHTML=`<div class="gl-hole">Hole ${hole}</div><div class="gl-player">${pName(pid)}</div><div class="gl-result ${cls}">${resultStr}</div>`;
+    gc.appendChild(row);
+  });
+  if(!hasGreenie){const r=document.createElement('div');r.className='gl-row';r.innerHTML='<div style="color:var(--txd);font-size:13px;padding:8px 0">No greenies marked yet</div>';gc.appendChild(r);}
+  body.appendChild(gc);
+
+  // ── 5·5·5 breakdown ──
+  const sc=document.createElement('div');sc.className='card';sc.style.marginBottom='12px';
+  sc.innerHTML='<div style="padding:12px 14px;font-family:DM Serif Display,serif;font-size:16px;color:var(--gold);border-bottom:1px solid var(--bd)">5·5·5 Detail</div>';
+  ['front','back','overall'].forEach(seg=>{
+    const segDiv=document.createElement('div');
+    segDiv.style.cssText='padding:8px 14px;border-bottom:1px solid var(--bd)';
+    segDiv.innerHTML=`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--txm);margin-bottom:6px">${seg==='overall'?'Overall 18':seg==='front'?'Front 9':'Back 9'}</div>`;
+    for(let m=1;m<=3;m++){
+      const r=segResult(m,seg);
+      const wids=MATCHES[m].wheel;const oids=MATCHES[m].opp;
+      const cls=r>0?'color:var(--g5)':r<0?'color:var(--redp)':'color:var(--txm)';
+      const txt=r===0?'Halved':(r>0?`Wheel wins (${wids.join('+')} def. ${oids.join('+')})`:`Opps win (${oids.join('+')} def. ${wids.join('+')})`);
+      const mrow=document.createElement('div');
+      mrow.style.cssText='display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:4px';
+      mrow.innerHTML=`<span style="color:var(--txm)">M${m}</span><span style="${cls}">${txt}</span>`;
+      segDiv.appendChild(mrow);
+    }
+    sc.appendChild(segDiv);
+  });
+  // press summary row
+  if(S.presses.length){
+    const pd=document.createElement('div');pd.style.cssText='padding:8px 14px';
+    pd.innerHTML=`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--purpp);margin-bottom:4px">Presses (${S.presses.length})</div>`;
+    S.presses.forEach((press,i)=>{
+      const ps=pressScore(press,18);const abs=Math.abs(ps);
+      const cls=ps>0?'color:var(--g5)':ps<0?'color:var(--redp)':'color:var(--txm)';
+      const txt=ps===0?'Halved':(ps>0?`W +${abs}`:`O +${abs}`);
+      const pr=document.createElement('div');pr.style.cssText='display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:3px';
+      pr.innerHTML=`<span style="color:var(--txm)">P${i+1} M${press.match} ${press.seg} h${press.startHole}</span><span style="${cls}">${txt}</span>`;
+      pd.appendChild(pr);
+    });
+    sc.appendChild(pd);
+  }
+  body.appendChild(sc);
+  const spacer=document.createElement('div');spacer.style.height='20px';body.appendChild(spacer);
+}
+
+// ══════════════════════════════════════════
+// 9 POINT GAME
+// ══════════════════════════════════════════
+
+// ── Setup ──
+function initNineSetup(){
+  const body=document.getElementById('nine-setup-body');
+  body.innerHTML='';
+
+  const lbl1=document.createElement('div');lbl1.className='slabel';lbl1.style.marginTop='0';lbl1.textContent='Select 3 players';
+  body.appendChild(lbl1);
+
+  const hint=document.createElement('div');hint.className='hint';hint.style.marginBottom='12px';
+  hint.textContent='Choose any 3 players — independent of Wheel rosters';
+  body.appendChild(hint);
+
+  const allIds=['W1','W2','A','B','C'];
+  const card=document.createElement('div');card.className='card';
+  allIds.forEach((id,i)=>{
+    const p=S.players.find(x=>x.id===id);
+    const row=document.createElement('div');
+    row.className='card-row';
+    if(i===allIds.length-1)row.style.borderBottom='none';
+    const sel=S.ninePlayers.includes(id);
+    row.innerHTML=`
+      <div class="badge ${id.startsWith('W')?'bw':'bo'}">${id}</div>
+      <div style="flex:1;font-size:14px;color:var(--tx)">${p.name||id}</div>
+      <div style="font-size:12px;color:var(--txm);margin-right:10px">Hdcp ${p.hdcp||0}</div>
+      <div style="width:22px;height:22px;border-radius:6px;border:2px solid ${sel?'var(--amberl)':'var(--bd)'};background:${sel?'var(--amber)':'transparent'};display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;flex-shrink:0" id="np-chk-${id}">${sel?'✓':''}</div>`;
+    row.onclick=()=>toggleNinePlayer(id);
+    card.appendChild(row);
+  });
+  body.appendChild(card);
+
+  const lbl2=document.createElement('div');lbl2.className='slabel';lbl2.textContent='Selected';
+  body.appendChild(lbl2);
+  const selDiv=document.createElement('div');selDiv.id='nine-selected-display';
+  selDiv.style.cssText='font-size:14px;color:var(--amberl);margin-bottom:16px;min-height:20px';
+  selDiv.textContent=S.ninePlayers.length?S.ninePlayers.map(id=>pName(id)).join(', '):'Pick 3 players above';
+  body.appendChild(selDiv);
+
+  const startBtn=document.createElement('button');
+  startBtn.className='startbtn';
+  startBtn.style.cssText='background:rgba(184,134,11,.3);border:1px solid rgba(184,134,11,.5)';
+  startBtn.textContent='Start 9 Point Game →';
+  startBtn.onclick=startNineGame;
+  body.appendChild(startBtn);
+  const spacer=document.createElement('div');spacer.style.height='24px';body.appendChild(spacer);
+}
+
+function toggleNinePlayer(id){
+  const idx=S.ninePlayers.indexOf(id);
+  if(idx>=0){S.ninePlayers.splice(idx,1);}
+  else if(S.ninePlayers.length<3){S.ninePlayers.push(id);}
+  save();
+  // Refresh checkboxes
+  ['W1','W2','A','B','C'].forEach(pid=>{
+    const el=document.getElementById(`np-chk-${pid}`);
+    if(!el)return;
+    const sel=S.ninePlayers.includes(pid);
+    el.style.borderColor=sel?'var(--amberl)':'var(--bd)';
+    el.style.background=sel?'var(--amber)':'transparent';
+    el.textContent=sel?'✓':'';
+  });
+  const disp=document.getElementById('nine-selected-display');
+  if(disp)disp.textContent=S.ninePlayers.length?S.ninePlayers.map(id=>pName(id)).join(', '):'Pick 3 players above';
+}
+
+function startNineGame(){
+  if(S.ninePlayers.length!==3){showToast('Pick exactly 3 players first');return;}
+  S.nineNine='front';
+  S.ninePresses={};
+  S.nineGreenies={};
+  save();
+  go('nine');
+}
+
+// ── Scoring helpers ──
+function nineNetScore(hole,pid){
+  const g=getScore(hole,pid);
+  if(g===undefined)return undefined;
+  // Net vs lowest hdcp among the 3 nine players
+  const hdcps=S.ninePlayers.map(id=>S.players.find(p=>p.id===id)?.hdcp||0);
+  const minH=Math.min(...hdcps);
+  const pH=S.players.find(p=>p.id===pid)?.hdcp||0;
+  const pops=pH-minH;
+  const hd=HOLES[hole-1].hdcp;
+  const strokes=pops>=hd?1:0;
+  return g-strokes;
+}
+
+// Returns {pid: points} for a hole. Always sums to 9.
+function ninePointsForHole(hole){
+  const nets=S.ninePlayers.map(id=>({id,net:nineNetScore(hole,id)}));
+  const defined=nets.filter(x=>x.net!==undefined);
+  if(defined.length<3)return null; // not all scored
+  defined.sort((a,b)=>a.net-b.net);
+  const [p1,p2,p3]=defined;
+  const pts={};
+  if(p1.net<p2.net&&p2.net<p3.net){pts[p1.id]=5;pts[p2.id]=3;pts[p3.id]=1;}
+  else if(p1.net===p2.net&&p2.net<p3.net){pts[p1.id]=4;pts[p2.id]=4;pts[p3.id]=1;}
+  else if(p1.net<p2.net&&p2.net===p3.net){pts[p1.id]=5;pts[p2.id]=2;pts[p3.id]=2;}
+  else{pts[p1.id]=3;pts[p2.id]=3;pts[p3.id]=3;}
+  return pts;
+}
+
+// Running points totals through hole
+function nineRunningPoints(throughHole){
+  const totals={};S.ninePlayers.forEach(id=>totals[id]=0);
+  for(let h=1;h<=throughHole;h++){
+    const pts=ninePointsForHole(h);
+    if(!pts)continue;
+    S.ninePlayers.forEach(id=>{if(pts[id])totals[id]+=pts[id];});
+  }
+  return totals;
+}
+
+// Point value per point at a given hole (considering presses)
+function nineRateAtHole(hole){
+  let rate=1;
+  // Each press increases rate by $1 from that hole forward
+  Object.entries(S.ninePresses||{}).forEach(([pid,pressHole])=>{
+    if(pressHole!==null&&hole>=pressHole)rate++;
+  });
+  return rate;
+}
+
+// Running dollar totals through hole
+function nineRunningDollars(throughHole){
+  const dollars={};S.ninePlayers.forEach(id=>dollars[id]=0);
+  for(let h=1;h<=throughHole;h++){
+    const pts=ninePointsForHole(h);
+    if(!pts)continue;
+    const rate=nineRateAtHole(h);
+    // Distribute: avg = 3 pts, each player's dollar swing = (pts - 3) * rate
+    // But we settle pairwise: net from mean
+    // Total = 9pts, avg = 3. Each player gets (pts[id]-3)*rate vs avg
+    S.ninePlayers.forEach(id=>{
+      const p=pts[id]||0;
+      dollars[id]+=(p-3)*rate;
+    });
+  }
+  return dollars;
+}
+
+// Greenie payout for 9pt game (among 3 players)
+function nineGreenieMoney(){
+  const money={};S.ninePlayers.forEach(id=>money[id]=0);
+  PAR3S.forEach(hole=>{
+    const pid=S.nineGreenies[hole];
+    if(!pid||!S.ninePlayers.includes(pid))return;
+    const score=getScore(hole,pid);
+    if(score===undefined)return;
+    const diff=score-HOLES[hole-1].par;
+    const others=S.ninePlayers.filter(id=>id!==pid);
+    let amt=0;
+    if(diff<=-2)amt=20;
+    else if(diff===-1)amt=10;
+    else if(diff===0)amt=5;
+    else amt=-10;
+    others.forEach(oid=>{money[oid]-=amt;});
+    money[pid]+=amt*2; // 2 others
+  });
+  return money;
+}
+
+// Can player press? Must be losing (below average in points) and not yet pressed
+function canPress(pid,throughHole){
+  if(S.ninePresses&&S.ninePresses[pid]!==undefined)return false; // already pressed
+  const pressCount=Object.values(S.ninePresses||{}).filter(v=>v!==null).length;
+  if(pressCount>=2)return false; // max 2 presses used
+  const tots=nineRunningPoints(throughHole);
+  const avg=9*throughHole/3;
+  return tots[pid]<avg; // losing
+}
+
+// ── Nine game tab switching ──
+function showNineNine(nine){
+  S.nineNine=nine;save();
+  const styleOn='flex:1;padding:7px;border-radius:8px;border:1px solid var(--amberl);background:rgba(184,134,11,.15);color:var(--amberl);font-size:12px;font-weight:500;cursor:pointer;font-family:DM Sans,sans-serif';
+  const styleOff='flex:1;padding:7px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--txm);font-size:12px;font-weight:500;cursor:pointer;font-family:DM Sans,sans-serif';
+  document.getElementById('ntab-front').style.cssText=nine==='front'?styleOn:styleOff;
+  document.getElementById('ntab-back').style.cssText=nine==='back'?styleOn:styleOff;
+  renderNineGame();
+}
+
+// ── Render scorecard ──
+function renderNineGame(){
+  if(!S.ninePlayers.length){go('nine-setup');return;}
+  const tee=TEES.find(t=>t.name===S.tee)||TEES[0];
+  document.getElementById('nine-meta').textContent=`${S.date||'Today'} · ${tee.name} · $1–$3/pt`;
+  const body=document.getElementById('nine-body');
+  body.innerHTML='';
+  const hset=S.nineNine==='front'?HOLES.slice(0,9):HOLES.slice(9,18);
+  hset.forEach(hd=>body.appendChild(buildNineHoleCard(hd)));
+}
+
+function buildNineHoleCard(hd){
+  const isP3=PAR3S.includes(hd.h);
+  const pts=ninePointsForHole(hd.h);
+  const rate=nineRateAtHole(hd.h);
+  const runDollars=nineRunningDollars(hd.h);
+
+  const div=document.createElement('div');div.className='nine-pt-hole';div.id=`nhc-${hd.h}`;
+
+  // Header
+  const hdr=document.createElement('div');hdr.className='nph-hdr';hdr.onclick=()=>toggleNineHole(hd.h);
+
+  const hnum=document.createElement('div');hnum.className='nph-num';hnum.textContent=hd.h;
+  const hinfo=document.createElement('div');hinfo.className='nph-info';
+  hinfo.innerHTML=`<div class="hpar">Par <b style="color:var(--gp)">${hd.par}</b>${isP3?'<span class="p3-flag">Greenie</span>':''}</div><span class="hhdcp">Hdcp ${hd.hdcp}</span> <span class="nph-rate">$${rate}/pt</span>`;
+
+  // Running dollar pills
+  const pillDiv=document.createElement('div');pillDiv.className='nph-pts';
+  S.ninePlayers.forEach(id=>{
+    const v=runDollars[id];
+    const cls=v>0?'npt-lead':v<0?'npt-trail':'npt-mid';
+    const pill=document.createElement('div');pill.className=`npt-pill ${cls}`;
+    pill.textContent=`${pName(id)} ${v>=0?'+$'+v:'-$'+Math.abs(v)}`;
+    pillDiv.appendChild(pill);
+  });
+
+  const chev=document.createElement('div');chev.className='chevron';chev.textContent='›';
+  hdr.append(hnum,hinfo,pillDiv,chev);
+
+  // Body
+  const body=document.createElement('div');body.className='nph-body';body.id=`nhb-${hd.h}`;
+
+  // Score rows
+  const scoreList=document.createElement('div');scoreList.className='np-score-list';
+  S.ninePlayers.forEach(pid=>{
+    const score=getScore(hd.h,pid);
+    const net=nineNetScore(hd.h,pid);
+    const holePoints=pts?pts[pid]:undefined;
+    const rowCls=holePoints===5||holePoints===4?'winner':holePoints===3&&pts&&Object.values(pts).every(v=>v===3)?'second':holePoints===3?'second':'';
+    const row=document.createElement('div');row.className=`np-srow ${rowCls}`;row.id=`nsr-${hd.h}-${pid}`;
+
+    const nm=document.createElement('div');nm.className='np-name';nm.textContent=pName(pid);
+    const stpr=document.createElement('div');stpr.className='stepper';
+    const mb=document.createElement('button');mb.className='sbtn';mb.textContent='−';
+    mb.onclick=e=>{e.stopPropagation();adjNine(hd,pid,-1);};
+    const vv=document.createElement('div');vv.className='sval '+scoreClass(score,hd.par);vv.id=`nsv-${hd.h}-${pid}`;
+    vv.textContent=score!==undefined?score:'·';
+    if(net!==undefined&&net!==score){
+      const netEl=document.createElement('span');netEl.style.cssText='font-size:10px;color:var(--txm);margin-left:3px';
+      netEl.textContent=`(${net})`;vv.appendChild(netEl);
+    }
+    const pb=document.createElement('button');pb.className='sbtn';pb.textContent='+';
+    pb.onclick=e=>{e.stopPropagation();adjNine(hd,pid,+1);};
+    stpr.append(mb,vv,pb);
+
+    const ptsBadge=document.createElement('div');ptsBadge.className=`np-pts-earned ${holePoints?'p'+holePoints:''}`;ptsBadge.id=`npts-${hd.h}-${pid}`;
+    ptsBadge.textContent=holePoints!==undefined?holePoints+'pt':'·';
+
+    row.append(nm,stpr,ptsBadge);
+    scoreList.appendChild(row);
+  });
+
+  if(pts){
+    const tot=document.createElement('div');tot.className='np-hole-total';
+    tot.textContent=`9 pts distributed at $${rate}/pt`;
+    scoreList.appendChild(tot);
+  }
+
+  body.appendChild(scoreList);
+
+  // Press section
+  const pressCount=Object.values(S.ninePresses||{}).filter(v=>v!==null).length;
+  const runPts=nineRunningPoints(hd.h);
+  const showPress=S.ninePlayers.some(pid=>canPress(pid,hd.h))||pressCount>0;
+  if(showPress){
+    const ps=document.createElement('div');ps.className='np-press-section';
+    ps.innerHTML=`<div class="np-press-title">⚡ Press ($${rate}→$${Math.min(rate+1,3)}/pt) — ${pressCount}/2 used</div>`;
+    const pl=document.createElement('div');pl.className='np-press-list';
+    S.ninePlayers.forEach(pid=>{
+      const alreadyPressed=S.ninePresses&&S.ninePresses[pid]!==undefined;
+      const canP=canPress(pid,hd.h);
+      const row=document.createElement('div');
+      row.className=`np-press-row${alreadyPressed?' pressed':canP?'':' used'}`;
+      row.innerHTML=`
+        <div class="np-press-check">${alreadyPressed?'✓':''}</div>
+        <div class="np-press-name">${pName(pid)}</div>
+        <div class="np-press-status">${alreadyPressed?`Pressed hole ${S.ninePresses[pid]}`:canP?'Can press (losing)':'—'}</div>`;
+      if(canP&&!alreadyPressed){row.onclick=e=>{e.stopPropagation();ninePress(pid,hd.h);};}
+      pl.appendChild(row);
+    });
+    ps.appendChild(pl);
+    body.appendChild(ps);
+  }
+
+  // Greenie section for par 3s
+  if(isP3)body.appendChild(buildNineGreenieSection(hd));
+
+  div.append(hdr,body);
+  return div;
+}
+
+function toggleNineHole(hole){
+  const card=document.getElementById(`nhc-${hole}`);
+  const body=document.getElementById(`nhb-${hole}`);
+  if(!card||!body)return;
+  const isOpen=card.classList.contains('open');
+  document.querySelectorAll('.nine-pt-hole').forEach(c=>c.classList.remove('open'));
+  if(!isOpen){card.classList.add('open');body.scrollIntoView({behavior:'smooth',block:'nearest'});}
+}
+
+function adjNine(hd,pid,delta){
+  const cur=getScore(hd.h,pid);
+  const nv=cur===undefined?hd.par+delta:cur+delta;
+  if(nv<1)return;
+  setScore(hd.h,pid,nv);
+  refreshNineHoleCard(hd.h);
+}
+
+function refreshNineHoleCard(hole){
+  const hd=HOLES[hole-1];
+  const pts=ninePointsForHole(hole);
+  const rate=nineRateAtHole(hole);
+  const runDollars=nineRunningDollars(hole);
+  // Update score vals and points badges
+  S.ninePlayers.forEach(pid=>{
+    const score=getScore(hole,pid);
+    const net=nineNetScore(hole,pid);
+    const vel=document.getElementById(`nsv-${hole}-${pid}`);
+    if(vel){vel.className='sval '+scoreClass(score,hd.par);vel.textContent=score!==undefined?score:'·';
+      if(net!==undefined&&net!==score){const n=document.createElement('span');n.style.cssText='font-size:10px;color:var(--txm);margin-left:3px';n.textContent=`(${net})`;vel.appendChild(n);}
+    }
+    const pel=document.getElementById(`npts-${hole}-${pid}`);
+    const hp=pts?pts[pid]:undefined;
+    if(pel){pel.className=`np-pts-earned ${hp?'p'+hp:''}`;pel.textContent=hp!==undefined?hp+'pt':'·';}
+    // Row highlight
+    const row=document.getElementById(`nsr-${hole}-${pid}`);
+    if(row){const cls=hp===5||hp===4?'winner':hp===3?'second':'';row.className=`np-srow ${cls}`;}
+  });
+  // Update header pills
+  const pillDiv=document.querySelector(`#nhc-${hole} .nph-pts`);
+  if(pillDiv){
+    pillDiv.innerHTML='';
+    S.ninePlayers.forEach(id=>{
+      const v=runDollars[id];
+      const cls=v>0?'npt-lead':v<0?'npt-trail':'npt-mid';
+      const pill=document.createElement('div');pill.className=`npt-pill ${cls}`;
+      pill.textContent=`${pName(id)} ${v>=0?'+$'+v:'-$'+Math.abs(v)}`;
+      pillDiv.appendChild(pill);
+    });
+  }
+  // Update rate label
+  const rateLbl=document.querySelector(`#nhc-${hole} .nph-rate`);
+  if(rateLbl)rateLbl.textContent=`$${rate}/pt`;
+  // Refresh greenie result
+  if(PAR3S.includes(hole))refreshNineGreenieResult(hole);
+}
+
+function ninePress(pid,hole){
+  if(!S.ninePresses)S.ninePresses={};
+  S.ninePresses[pid]=hole;save();
+  showToast(`⚡ ${pName(pid)} pressed! Rate now $${Math.min(Object.values(S.ninePresses).filter(v=>v!==null).length+1,3)}/pt from hole ${hole}`);
+  renderNineGame();
+}
+
+// ── Nine Greenies ──
+function buildNineGreenieSection(hd){
+  const sec=document.createElement('div');sec.className='greenie-section';sec.id=`ngs-${hd.h}`;
+  sec.innerHTML=`<div class="g-title">🏌 Greenie — hole ${hd.h} (9pt players only)</div>`;
+  const list=document.createElement('div');list.className='g-players';
+  S.ninePlayers.forEach(pid=>{
+    const row=document.createElement('div');
+    row.className='g-row'+(S.nineGreenies[hd.h]===pid?' closest':'');
+    row.id=`ngr-${hd.h}-${pid}`;
+    row.onclick=()=>setNineGreenie(hd.h,pid);
+    const rt=nineGreenieResultText(hd,pid);
+    row.innerHTML=`
+      <div class="g-radio"><div class="g-radio-dot"></div></div>
+      <div class="g-name">${pName(pid)}</div>
+      <div class="g-result ${rt.cls}" id="ngr-res-${hd.h}-${pid}">${rt.txt}</div>`;
+    list.appendChild(row);
+  });
+  sec.appendChild(list);
+  const hint=document.createElement('div');hint.className='hint';hint.style.color='var(--amberl)';
+  hint.textContent='Tap to mark closest · pays among 3 players only';
+  sec.appendChild(hint);
+  return sec;
+}
+
+function nineGreenieResultText(hd,pid){
+  const score=getScore(hd.h,pid);
+  if(S.nineGreenies[hd.h]!==pid)return{cls:'g-none',txt:''};
+  if(score===undefined)return{cls:'g-none',txt:'(no score)'};
+  const diff=score-hd.par;
+  if(diff<=-2)return{cls:'g-win',txt:'Eagle +$40'};
+  if(diff===-1)return{cls:'g-win',txt:'Birdie +$20'};
+  if(diff===0)return{cls:'g-win',txt:'Par +$10'};
+  return{cls:'g-lose',txt:'Bogey −$20'};
+}
+
+function setNineGreenie(hole,pid){
+  S.nineGreenies[hole]=S.nineGreenies[hole]===pid?null:pid;save();
+  S.ninePlayers.forEach(id=>{
+    const row=document.getElementById(`ngr-${hole}-${id}`);if(!row)return;
+    row.className='g-row'+(S.nineGreenies[hole]===id?' closest':'');
+    const rt=nineGreenieResultText(HOLES[hole-1],id);
+    const rel=document.getElementById(`ngr-res-${hole}-${id}`);
+    if(rel){rel.className=`g-result ${rt.cls}`;rel.textContent=rt.txt;}
+  });
+}
+
+function refreshNineGreenieResult(hole){
+  const hd=HOLES[hole-1];
+  S.ninePlayers.forEach(id=>{
+    const rt=nineGreenieResultText(hd,id);
+    const rel=document.getElementById(`ngr-res-${hole}-${id}`);
+    if(rel){rel.className=`g-result ${rt.cls}`;rel.textContent=rt.txt;}
+  });
+}
+
+// ── Nine Ledger ──
+function renderNineLedger(){
+  const body=document.getElementById('nine-ledger-body');body.innerHTML='';
+  if(!S.ninePlayers.length){body.innerHTML='<div style="padding:30px;text-align:center;color:var(--txd)">No 9 Point game set up yet</div>';return;}
+
+  const pressCount=Object.values(S.ninePresses||{}).filter(v=>v!==null).length;
+  const curRate=1+pressCount;
+
+  // Points totals
+  const totPts=nineRunningPoints(18);
+  const totDollars=nineRunningDollars(18);
+  const greenieMoney=nineGreenieMoney();
+
+  // Combined net
+  const netMoney={};
+  S.ninePlayers.forEach(id=>{netMoney[id]=(totDollars[id]||0)+(greenieMoney[id]||0);});
+
+  // Main standings card
+  const mc=document.createElement('div');mc.className='nine-ledger';
+  mc.innerHTML=`<div class="nine-ledger-hdr">Net standings<span class="nine-ledger-rate">Current rate: $${curRate}/pt</span></div>`;
+  S.ninePlayers.slice().sort((a,b)=>netMoney[b]-netMoney[a]).forEach(id=>{
+    const v=netMoney[id];const cls=v>0?'pos':v<0?'neg':'zer';
+    const txt=v>=0?`+$${v.toFixed(0)}`:`−$${Math.abs(v).toFixed(0)}`;
+    const row=document.createElement('div');row.className='nine-ledger-row';
+    row.innerHTML=`<div class="nlr-name">${pName(id)}</div><div class="nlr-pts">${totPts[id]}pts</div><div class="nlr-money ${cls}">${txt}</div>`;
+    mc.appendChild(row);
+  });
+  body.appendChild(mc);
+
+  // Settlement
+  const txns=simplifyDebts(netMoney);
+  if(txns.length){
+    const oc=document.createElement('div');oc.className='owes-card';
+    oc.innerHTML='<div class="owes-hdr">Settlement</div>';
+    txns.forEach(t=>{
+      const row=document.createElement('div');row.className='owes-row';
+      row.innerHTML=`<div class="owes-from">${pName(t.from)}</div><div class="owes-arrow">→</div><div class="owes-to">${pName(t.to)}</div><div class="owes-amt">$${t.amt.toFixed(2)}</div>`;
+      oc.appendChild(row);
+    });
+    body.appendChild(oc);
+  }
+
+  // Points breakdown per hole
+  const ptCard=document.createElement('div');ptCard.className='card';ptCard.style.marginBottom='12px';
+  ptCard.innerHTML='<div style="padding:10px 14px;font-family:DM Serif Display,serif;font-size:15px;color:var(--amberl);border-bottom:1px solid var(--bd)">Points by hole</div>';
+  const hdrRow=document.createElement('div');
+  hdrRow.style.cssText='display:grid;grid-template-columns:40px 1fr 1fr 1fr 60px;padding:6px 14px;font-size:10px;color:var(--txd);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--bd)';
+  hdrRow.innerHTML=`<div>Hole</div>${S.ninePlayers.map(id=>`<div>${pName(id)}</div>`).join('')}<div>Rate</div>`;
+  ptCard.appendChild(hdrRow);
+  for(let h=1;h<=18;h++){
+    const pts=ninePointsForHole(h);const rate=nineRateAtHole(h);
+    if(!pts)continue;
+    const row=document.createElement('div');
+    row.style.cssText='display:grid;grid-template-columns:40px 1fr 1fr 1fr 60px;padding:6px 14px;font-size:12px;border-bottom:1px solid var(--bd)';
+    row.innerHTML=`<div style="color:var(--txm)">${h}</div>${S.ninePlayers.map(id=>`<div style="font-family:DM Mono,monospace;color:${pts[id]===5||pts[id]===4?'var(--g5)':pts[id]===1?'var(--txd)':'var(--tx)'}">${pts[id]}</div>`).join('')}<div style="color:var(--amberl);font-family:DM Mono,monospace">$${rate}</div>`;
+    ptCard.appendChild(row);
+  }
+  // Totals row
+  const totRow=document.createElement('div');
+  totRow.style.cssText='display:grid;grid-template-columns:40px 1fr 1fr 1fr 60px;padding:8px 14px;font-size:13px;font-weight:500;background:rgba(255,255,255,.03)';
+  totRow.innerHTML=`<div style="color:var(--txm)">Tot</div>${S.ninePlayers.map(id=>`<div style="font-family:DM Mono,monospace;color:var(--amberl)">${totPts[id]}</div>`).join('')}<div></div>`;
+  ptCard.appendChild(totRow);
+  body.appendChild(ptCard);
+
+  // Greenie detail
+  const gc=document.createElement('div');gc.className='greenie-ledger';
+  gc.innerHTML='<div class="gl-hdr">Greenies (9pt)</div>';
+  let hasG=false;
+  PAR3S.forEach(hole=>{
+    const pid=S.nineGreenies[hole];
+    if(!pid||!S.ninePlayers.includes(pid))return;hasG=true;
+    const score=getScore(hole,pid);const hd=HOLES[hole-1];
+    const diff=score!==undefined?score-hd.par:null;
+    let resultStr='(no score)',cls='';
+    if(diff!==null){if(diff<=-2){resultStr='Eagle +$40';cls='win';}else if(diff===-1){resultStr='Birdie +$20';cls='win';}else if(diff===0){resultStr='Par +$10';cls='win';}else{resultStr='Bogey −$20';cls='lose';}}
+    const row=document.createElement('div');row.className='gl-row';
+    row.innerHTML=`<div class="gl-hole">Hole ${hole}</div><div class="gl-player">${pName(pid)}</div><div class="gl-result ${cls}">${resultStr}</div>`;
+    gc.appendChild(row);
+  });
+  if(!hasG){const r=document.createElement('div');r.className='gl-row';r.innerHTML='<div style="color:var(--txd);font-size:13px">No greenies marked yet</div>';gc.appendChild(r);}
+  body.appendChild(gc);
+
+  // Press log
+  if(pressCount>0){
+    const pc=document.createElement('div');pc.className='card';pc.style.marginBottom='12px';
+    pc.innerHTML='<div style="padding:10px 14px;font-family:DM Serif Display,serif;font-size:15px;color:var(--purpp);border-bottom:1px solid var(--bd)">Press log</div>';
+    S.ninePlayers.forEach(pid=>{
+      if(S.ninePresses[pid]===undefined)return;
+      const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--bd);font-size:13px';
+      row.innerHTML=`<span style="color:var(--tx)">${pName(pid)}</span><span style="color:var(--purpp);font-family:DM Mono,monospace">Pressed hole ${S.ninePresses[pid]}</span>`;
+      pc.appendChild(row);
+    });
+    const rateRow=document.createElement('div');rateRow.style.cssText='padding:8px 14px;font-size:12px;color:var(--txm);font-style:italic';
+    rateRow.textContent=`Rate: $1/pt → $${1+pressCount}/pt after ${pressCount} press${pressCount>1?'es':''}`;
+    pc.appendChild(rateRow);
+    body.appendChild(pc);
+  }
+
+  const spacer=document.createElement('div');spacer.style.height='20px';body.appendChild(spacer);
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+initSetup();
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
