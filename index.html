@@ -120,6 +120,16 @@ body{display:flex;flex-direction:column;padding-top:var(--safe-t);padding-bottom
 .stepper{display:flex;align-items:center;gap:4px}
 .sbtn{width:26px;height:26px;border-radius:6px;border:1px solid var(--bd);background:rgba(255,255,255,.05);color:var(--tx);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'DM Sans',sans-serif}
 .sbtn:active{transform:scale(.88);background:rgba(255,255,255,.15)}
+.sbtn-par{width:26px;height:26px;border-radius:6px;border:1px solid rgba(201,168,76,.4);background:rgba(201,168,76,.1);color:var(--goldl);font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:DM Sans,sans-serif;letter-spacing:.02em}
+.sbtn-par:active{transform:scale(.88);background:rgba(201,168,76,.3)}
+.msbar-cell{background:var(--g2);border:1px solid var(--bd);border-radius:8px;padding:5px 6px;display:flex;flex-direction:column;gap:2px}
+.msbar-match{font-size:9px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--txd)}
+.msbar-segs{display:flex;gap:3px;flex-wrap:wrap}
+.msbar-seg{font-size:10px;font-family:DM Mono,monospace;font-weight:500;padding:1px 5px;border-radius:4px;white-space:nowrap}
+.msbar-seg.w{background:rgba(46,122,58,.25);color:var(--gp);border:1px solid rgba(46,122,58,.3)}
+.msbar-seg.o{background:rgba(192,57,43,.2);color:var(--redp);border:1px solid rgba(192,57,43,.3)}
+.msbar-seg.e{background:rgba(201,168,76,.1);color:var(--goldl);border:1px solid rgba(201,168,76,.2)}
+.pop-badge{display:inline-flex;align-items:center;font-size:9px;font-weight:600;font-family:DM Mono,monospace;padding:1px 5px;border-radius:5px;margin-left:5px;background:rgba(107,63,160,.2);color:var(--purpp);border:1px solid rgba(107,63,160,.35);letter-spacing:.02em;flex-shrink:0}
 .sval{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;min-width:22px;text-align:center}
 .v-eagle{color:#f0c040}.v-birdie{color:var(--g5)}.v-par{color:var(--tx)}.v-bogey{color:var(--redp)}.v-double{color:var(--redl)}.v-empty{color:var(--txd)}
 
@@ -344,6 +354,7 @@ select option{background:#122b17}
     <button id="tab-front" onclick="showNine('front')" style="flex:1;padding:7px;border-radius:8px;border:1px solid var(--g4);background:var(--g3);color:var(--gp);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Front 9</button>
     <button id="tab-back"  onclick="showNine('back')"  style="flex:1;padding:7px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--txm);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Back 9</button>
   </div>
+  <div id="match-status-bar" style="background:var(--g0);border-bottom:1px solid var(--bd);padding:6px 10px;flex-shrink:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px"></div>
   <div class="body" id="score-body"></div>
   <div class="bnav">
     <button class="bnav-btn on" onclick="go('score')"><span class="icon">⛳</span>Card</button>
@@ -392,6 +403,7 @@ select option{background:#122b17}
     <button id="ntab-front" onclick="showNineNine('front')" style="flex:1;padding:7px;border-radius:8px;border:1px solid var(--amberl);background:rgba(184,134,11,.15);color:var(--amberl);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Front 9</button>
     <button id="ntab-back"  onclick="showNineNine('back')"  style="flex:1;padding:7px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--txm);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Back 9</button>
   </div>
+  <div id="nine-status-bar" style="background:var(--g0);border-bottom:1px solid rgba(184,134,11,.2);padding:6px 10px;flex-shrink:0"></div>
   <div class="body" id="nine-body"></div>
 </div>
 
@@ -425,7 +437,7 @@ select option{background:#122b17}
       </select>
     </div>
     <div class="mrow"><label>Segment</label>
-      <select class="msel" id="pm-seg">
+      <select class="msel" id="pm-seg" onchange="refreshPressHoleOptions(null)">
         <option value="front">Front 9 ($5)</option>
         <option value="back">Back 9 ($5)</option>
         <option value="overall">Overall 18 ($5)</option>
@@ -690,6 +702,154 @@ function renderScore(){
   body.innerHTML='';
   const hset=S.nine==='front'?HOLES.slice(0,9):HOLES.slice(9,18);
   hset.forEach(hd=>body.appendChild(buildHoleCard(hd)));
+  const gsb=buildGrossSummaryBar(S.nine);gsb.id="gross-summary-bar";body.appendChild(gsb);
+  renderMatchStatusBar();
+}
+
+function buildGrossSummaryBar(nine){
+  const holes=nine==='front'?HOLES.slice(0,9):HOLES.slice(9,18);
+  const holeNums=holes.map(h=>h.h);
+  const par=holes.reduce((a,h)=>a+h.par,0);
+  const allIds=['W1','W2','A','B','C'];
+
+  const bar=document.createElement('div');
+  bar.style.cssText='background:var(--g2);border:1px solid var(--bdg);border-radius:var(--cr);overflow:hidden;margin-bottom:8px';
+
+  // Header
+  const hdr=document.createElement('div');
+  hdr.style.cssText='padding:8px 14px;background:rgba(201,168,76,.08);border-bottom:1px solid var(--bdg);font-family:DM Serif Display,serif;font-size:14px;color:var(--gold);display:flex;align-items:center;justify-content:space-between';
+  hdr.innerHTML=`<span>${nine==='front'?'Front 9':'Back 9'} Totals</span><span style="font-family:DM Mono,monospace;font-size:12px;color:var(--txm)">Par ${par}</span>`;
+  bar.appendChild(hdr);
+
+  // Player rows
+  allIds.forEach(pid=>{
+    const scores=holeNums.map(h=>getScore(h,pid));
+    const played=scores.filter(s=>s!==undefined);
+    if(played.length===0)return;
+    const gross=played.reduce((a,b)=>a+b,0);
+    const diff=played.length===holeNums.length?gross-par:null;
+    const diffTxt=diff===null?`(${played.length}/9)`:(diff===0?'E':diff>0?`+${diff}`:String(diff));
+    const diffCls=diff===null?'color:var(--txd)':diff<0?'color:var(--g5)':diff>0?'color:var(--redp)':'color:var(--tx)';
+    const isWheel=['W1','W2'].includes(pid);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--bd)';
+    row.innerHTML=`
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;${isWheel?'background:rgba(26,58,92,.5);color:var(--navyp);border:1px solid rgba(46,109,164,.4)':'background:rgba(192,57,43,.2);color:var(--redp);border:1px solid rgba(192,57,43,.35)'}">${pid}</div>
+        <span style="font-size:13px;color:var(--tx)">${pName(pid)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-family:DM Mono,monospace;font-size:18px;font-weight:500;color:var(--tx)">${gross}</span>
+        <span style="font-family:DM Mono,monospace;font-size:13px;${diffCls}">${diffTxt}</span>
+      </div>`;
+    bar.appendChild(row);
+  });
+
+  // If nobody has scores yet
+  if(bar.children.length===1){
+    const empty=document.createElement('div');
+    empty.style.cssText='padding:12px 14px;font-size:13px;color:var(--txd);font-style:italic';
+    empty.textContent='No scores entered yet';
+    bar.appendChild(empty);
+  }
+
+  return bar;
+}
+
+function renderNineStatusBar(){
+  const bar=document.getElementById('nine-status-bar');
+  if(!bar)return;
+  const totPts=nineRunningPoints(18);
+  const totDollars=nineRunningDollars(18);
+  const greenieMoney=nineGreenieMoney();
+  const pressCount=Object.values(S.ninePresses||{}).filter(v=>v!==null).length;
+  const rate=1+pressCount;
+  bar.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:4px';
+  S.ninePlayers.forEach(pid=>{
+    const pts=totPts[pid]||0;
+    const dollars=(totDollars[pid]||0)+(greenieMoney[pid]||0);
+    const isPos=dollars>0,isNeg=dollars<0;
+    const dolCls=isPos?'color:var(--g5)':isNeg?'color:var(--redp)':'color:var(--goldl)';
+    const dolTxt=dollars===0?'E':dollars>0?'+$'+dollars:'-$'+Math.abs(dollars);
+    const cell=document.createElement('div');
+    cell.style.cssText='background:var(--g2);border:1px solid rgba(184,134,11,.25);border-radius:8px;padding:5px 7px;display:flex;flex-direction:column;gap:2px';
+    cell.innerHTML=`<div style="font-size:11px;font-weight:500;color:var(--amberl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${npName(pid)}</div>
+      <div style="display:flex;align-items:baseline;gap:5px">
+        <span style="font-family:DM Mono,monospace;font-size:13px;color:var(--tx);font-weight:500">${pts}pt</span>
+        <span style="font-family:DM Mono,monospace;font-size:13px;font-weight:600;${dolCls}">${dolTxt}</span>
+      </div>
+      <div style="font-size:9px;color:var(--txd)">\$${rate}/pt</div>`;
+    grid.appendChild(cell);
+  });
+  bar.appendChild(grid);
+}
+
+function buildNineSummaryBar(){
+  const totPts=nineRunningPoints(18);
+  const totDollars=nineRunningDollars(18);
+  const greenieMoney=nineGreenieMoney();
+  const pressCount=Object.values(S.ninePresses||{}).filter(v=>v!==null).length;
+  const rate=1+pressCount;
+  const bar=document.createElement('div');
+  bar.id='nine-summary-bar';
+  bar.style.cssText='background:var(--g2);border:1px solid rgba(184,134,11,.3);border-radius:var(--cr);overflow:hidden;margin-bottom:8px';
+  const hdr=document.createElement('div');
+  hdr.style.cssText='padding:8px 14px;background:rgba(184,134,11,.08);border-bottom:1px solid rgba(184,134,11,.2);font-family:DM Serif Display,serif;font-size:14px;color:var(--amberl);display:flex;align-items:center;justify-content:space-between';
+  const holesScored=Array.from({length:18},(_,i)=>i+1).filter(h=>ninePointsForHole(h)!==null).length;
+  hdr.innerHTML=`<span>Running Total</span><span style="font-family:DM Mono,monospace;font-size:11px;color:var(--txm)">${holesScored} holes · $${rate}/pt</span>`;
+  bar.appendChild(hdr);
+  S.ninePlayers.slice().sort((a,b)=>((totDollars[b]||0)+(greenieMoney[b]||0))-((totDollars[a]||0)+(greenieMoney[a]||0))).forEach((pid,i)=>{
+    const pts=totPts[pid]||0;
+    const dollars=(totDollars[pid]||0)+(greenieMoney[pid]||0);
+    const dolCls=dollars>0?'pos':dollars<0?'neg':'zer';
+    const dolTxt=dollars===0?'Even':dollars>0?'+$'+dollars:'-$'+Math.abs(dollars);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid rgba(184,134,11,.1)';
+    if(i===S.ninePlayers.length-1)row.style.borderBottom='none';
+    const rankCls=i===0?'r1':i===1?'r2':'r3';
+    row.innerHTML=`<div style="display:flex;align-items:center;gap:8px">
+        <div class="sb-rank ${rankCls}">${i+1}</div>
+        <span style="font-size:14px;font-weight:500;color:var(--tx)">${npName(pid)}</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:10px">
+        <span style="font-family:DM Mono,monospace;font-size:13px;color:var(--txm)">${pts} pts</span>
+        <span class="money-net ${dolCls}" style="font-size:20px">${dolTxt}</span>
+      </div>`;
+    bar.appendChild(row);
+  });
+  return bar;
+}
+
+function renderMatchStatusBar(){
+  const bar=document.getElementById('match-status-bar');
+  if(!bar)return;
+  bar.innerHTML='';
+  for(let m=1;m<=3;m++){
+    const cell=document.createElement('div');cell.className='msbar-cell';
+    const lbl=document.createElement('div');lbl.className='msbar-match';
+    lbl.textContent='M'+m+' vs '+matchLabel(m);
+    const segs=document.createElement('div');segs.className='msbar-segs';
+    [{key:'front',lbl:'F9'},{key:'back',lbl:'B9'},{key:'overall',lbl:'18'}].forEach(sg=>{
+      const v=segScore(m,SEGS[sg.key].holes);
+      const cls=v>0?'w':v<0?'o':'e';
+      const abs=Math.abs(v);
+      const txt=sg.lbl+' '+(v===0?'E':v>0?'W+'+abs:'O+'+abs);
+      const pill=document.createElement('span');pill.className='msbar-seg '+cls;pill.textContent=txt;
+      segs.appendChild(pill);
+    });
+    cell.append(lbl,segs);bar.appendChild(cell);
+  }
+}
+
+function refreshGrossSummaryBar(){
+  const body=document.getElementById("score-body");
+  if(!body)return;
+  const old=document.getElementById("gross-summary-bar");
+  const newBar=buildGrossSummaryBar(S.nine);
+  newBar.id="gross-summary-bar";
+  if(old)old.replaceWith(newBar);
 }
 
 function buildHoleCard(hd){
@@ -775,16 +935,27 @@ function buildHoleCard(hd){
 function buildScoreRow(hd,pid,matchForPops){
   const score=getScore(hd.h,pid);
   const hasPops=matchForPops&&getPops(pid,matchForPops)>0;
+  // Find all matches this player is in and check if they get a stroke on this hole
+  const playerMatches=[1,2,3].filter(m=>{const mm=MATCHES[m];return [...mm.wheel,...mm.opp].includes(pid);});
+  const popsByMatch=playerMatches.map(m=>({m,pops:getPops(pid,m)}));
+  const strokeMatches=popsByMatch.filter(x=>x.pops>=hd.hdcp).map(x=>x.m);
   const row=document.createElement('div');row.className='srow';row.id=`sr-${hd.h}-${pid}`;
   const nm=document.createElement('div');nm.className='srow-name'+(hasPops?' pops':'');nm.textContent=pName(pid);
+  if(strokeMatches.length>0){
+    const badge=document.createElement('span');badge.className='pop-badge';
+    badge.textContent=strokeMatches.length===playerMatches.length?'+1':'+1 M'+strokeMatches.join('/M');
+    nm.appendChild(badge);
+  }
   const st=document.createElement('div');st.className='stepper';
   const m=document.createElement('button');m.className='sbtn';m.textContent='−';
   m.onclick=e=>{e.stopPropagation();adj(hd,pid,-1);};
   const v=document.createElement('div');v.className='sval '+scoreClass(score,hd.par);v.id=`sv-${hd.h}-${pid}`;
   v.textContent=score!==undefined?score:'·';
+  const par=document.createElement('button');par.className='sbtn-par';par.textContent='P';par.title='Set to par';
+  par.onclick=e=>{e.stopPropagation();setScore(hd.h,pid,hd.par);const vel=document.getElementById('sv-'+hd.h+'-'+pid);if(vel){vel.textContent=hd.par;vel.className='sval v-par';}['wheel','opp'].forEach(side=>{const lel=document.getElementById('low-'+hd.h+'-'+side);if(lel)refreshLow(lel,hd,side);});refreshHoleCard(hd.h);if(PAR3S.includes(hd.h))refreshGreenieResult(hd.h);refreshGrossSummaryBar();};
   const p=document.createElement('button');p.className='sbtn';p.textContent='+';
   p.onclick=e=>{e.stopPropagation();adj(hd,pid,1);};
-  st.append(m,v,p);row.append(nm,st);
+  st.append(m,v,par,p);row.append(nm,st);
   return row;
 }
 
@@ -821,6 +992,8 @@ function adj(hd,pid,delta){
   refreshHoleCard(hd.h);
   // Refresh greenie result if par 3
   if(PAR3S.includes(hd.h))refreshGreenieResult(hd.h);
+  // Refresh gross summary bar
+  refreshGrossSummaryBar();
 }
 
 // ── TOAST ──
@@ -845,6 +1018,8 @@ function refreshHoleCard(hole){
       el.querySelector('.mres-val').textContent=txt;
     });
   }
+  // Refresh match status bar
+  renderMatchStatusBar();
   // Update header pills
   const hdr=document.querySelector(`#hc-${hole} .hmscore`);
   if(hdr){
@@ -940,12 +1115,13 @@ function openPressModal(holeNum){
     o.textContent=`Match ${m} — vs ${matchLabel(m)}`;
     ms.appendChild(o);
   });
+  // Auto-select segment based on which nine the hole is on
+  if(holeNum){
+    const seg=document.getElementById('pm-seg');
+    seg.value=holeNum<=9?'front':'back';
+  }
   // Populate hole options
-  const hs=document.getElementById('pm-hole');
-  hs.innerHTML='';
-  const min=holeNum||2;
-  for(let i=min;i<=18;i++){const o=document.createElement('option');o.value=i;o.textContent=i;hs.appendChild(o);}
-  if(holeNum)hs.value=holeNum;
+  refreshPressHoleOptions(holeNum);
   // Populate parent options
   const pp=document.getElementById('pm-parent');
   pp.innerHTML='<option value="">— new press —</option>';
@@ -955,6 +1131,16 @@ function openPressModal(holeNum){
     pp.appendChild(o);
   });
   document.getElementById('press-modal').classList.add('on');
+}
+function refreshPressHoleOptions(holeNum){
+  const hs=document.getElementById('pm-hole');
+  const segVal=document.getElementById('pm-seg').value;
+  const holeMin=segVal==='back'?10:1;
+  const holeMax=segVal==='front'?9:18;
+  const cur=holeNum||+hs.value||holeMin;
+  hs.innerHTML='';
+  for(let i=holeMin;i<=holeMax;i++){const o=document.createElement('option');o.value=i;o.textContent=i;hs.appendChild(o);}
+  hs.value=(cur>=holeMin&&cur<=holeMax)?cur:holeMin;
 }
 function closePressModal(){document.getElementById('press-modal').classList.remove('on');}
 function confirmPress(){
@@ -968,7 +1154,9 @@ function confirmPress(){
 }
 
 function pressScore(press,throughHole){
-  const holes=SEGS[press.seg].holes.filter(h=>h>=press.startHole&&h<=throughHole);
+  const nineEnd=press.startHole<=9?9:18;
+  const cap=Math.min(throughHole,nineEnd);
+  const holes=SEGS[press.seg].holes.filter(h=>h>=press.startHole&&h<=cap);
   let s=0;
   for(const h of holes){
     const wl=teamLow(h,press.match,'wheel'),ol=teamLow(h,press.match,'opp');
@@ -1166,7 +1354,7 @@ function buildWheelScoreboard(){
     const diffCls=diff===null?'':diff<0?'under':diff>0?'over':'even';
     row.innerHTML=`
       <div class="sb-name"><div class="sb-rank ${rankCls}">${i+1}</div>${d.name}</div>
-      <div class="sb-score sb-gross">${grossTxt}</div>
+      <div class="sb-score sb-gross" style="font-size:20px;font-weight:600;color:var(--tx)">${grossTxt}</div>
       <div class="sb-score sb-net ${diffCls}">${netTxt}</div>
       <div class="sb-score sb-net ${diffCls}">${diffTxt}</div>`;
     card.appendChild(row);
@@ -1227,7 +1415,7 @@ function buildNineScoreboard(){
     const diffCls=diff===null?'':diff<0?'under':diff>0?'over':'even';
     row.innerHTML=`
       <div class="sb-name"><div class="sb-rank ${rankCls}">${i+1}</div>${d.name}</div>
-      <div class="sb-score sb-gross">${grossTxt}</div>
+      <div class="sb-score sb-gross" style="font-size:20px;font-weight:600;color:var(--tx)">${grossTxt}</div>
       <div class="sb-score sb-net ${diffCls}">${netTxt}</div>
       <div class="sb-score sb-net ${diffCls}">${diffTxt}</div>`;
     card.appendChild(row);
@@ -1540,6 +1728,8 @@ function renderNineGame(){
   body.innerHTML='';
   const hset=S.nineNine==='front'?HOLES.slice(0,9):HOLES.slice(9,18);
   hset.forEach(hd=>body.appendChild(buildNineHoleCard(hd)));
+  const nsb=buildNineSummaryBar();body.appendChild(nsb);
+  renderNineStatusBar();
 }
 
 function buildNineHoleCard(hd){
@@ -1583,6 +1773,14 @@ function buildNineHoleCard(hd){
     const row=document.createElement('div');row.className=`np-srow ${rowCls}`;row.id=`nsr-${hd.h}-${pid}`;
 
     const nm=document.createElement('div');nm.className='np-name';nm.textContent=npName(pid);
+    // Show pop badge if player gets a stroke on this hole
+    const nineHdcps=S.ninePlayers.map(id=>npHdcp(id));
+    const nineMinH=Math.min(...nineHdcps);
+    const ninePops=npHdcp(pid)-nineMinH;
+    if(ninePops>=hd.hdcp){
+      const popBadge=document.createElement('span');popBadge.className='pop-badge';
+      popBadge.textContent='+1';nm.appendChild(popBadge);
+    }
     const stpr=document.createElement('div');stpr.className='stepper';
     const mb=document.createElement('button');mb.className='sbtn';mb.textContent='−';
     mb.onclick=e=>{e.stopPropagation();adjNine(hd,pid,-1);};
@@ -1592,9 +1790,11 @@ function buildNineHoleCard(hd){
       const netEl=document.createElement('span');netEl.style.cssText='font-size:10px;color:var(--txm);margin-left:3px';
       netEl.textContent=`(${net})`;vv.appendChild(netEl);
     }
+    const parb=document.createElement('button');parb.className='sbtn-par';parb.textContent='P';parb.title='Set to par';
+    parb.onclick=e=>{e.stopPropagation();nineSetScore(hd.h,pid,hd.par);refreshNineHoleCard(hd.h);};
     const pb=document.createElement('button');pb.className='sbtn';pb.textContent='+';
     pb.onclick=e=>{e.stopPropagation();adjNine(hd,pid,+1);};
-    stpr.append(mb,vv,pb);
+    stpr.append(mb,vv,parb,pb);
 
     const ptsBadge=document.createElement('div');ptsBadge.className=`np-pts-earned ${holePoints?'p'+holePoints:''}`;ptsBadge.id=`npts-${hd.h}-${pid}`;
     ptsBadge.textContent=holePoints!==undefined?holePoints+'pt':'·';
@@ -1691,6 +1891,10 @@ function refreshNineHoleCard(hole){
   const rateLbl=document.querySelector(`#nhc-${hole} .nph-rate`);
   if(rateLbl)rateLbl.textContent=`$${rate}/pt`;
   if(PAR3S.includes(hole))refreshNineGreenieResult(hole);
+  // Refresh status bar and summary bar
+  renderNineStatusBar();
+  const old=document.getElementById('nine-summary-bar');
+  if(old){const nb=buildNineSummaryBar();old.replaceWith(nb);}
 }
 
 function ninePress(pid,hole){
