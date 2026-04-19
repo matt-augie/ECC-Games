@@ -288,7 +288,29 @@ select option{background:#122b17}
 .nlr-money{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;min-width:70px;text-align:right}
 .nlr-money.pos{color:var(--g5)}.nlr-money.neg{color:var(--redp)}.nlr-money.zer{color:var(--txm)}
 
-/* AUTO PRESS TOAST */
+/* SCOREBOARD CARD */
+.scoreboard{background:var(--g2);border:1px solid var(--bdg);border-radius:var(--cr);overflow:hidden;margin-bottom:12px}
+.scoreboard-hdr{padding:11px 16px;background:rgba(201,168,76,.08);border-bottom:1px solid var(--bdg);font-family:'DM Serif Display',serif;font-size:16px;color:var(--gold);display:flex;align-items:center;justify-content:space-between}
+.scoreboard-sub{font-size:11px;color:var(--txm);font-family:'DM Sans',sans-serif}
+.scoreboard-cols{display:grid;grid-template-columns:1fr 52px 52px 52px;padding:6px 16px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--txd);border-bottom:1px solid var(--bd)}
+.scoreboard-row{display:grid;grid-template-columns:1fr 52px 52px 52px;padding:10px 16px;border-bottom:1px solid var(--bd);align-items:center}
+.scoreboard-row:last-child{border-bottom:none}
+.scoreboard-row.top{background:rgba(201,168,76,.05)}
+.sb-name{font-size:14px;color:var(--tx);font-weight:500;display:flex;align-items:center;gap:7px}
+.sb-rank{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0}
+.sb-rank.r1{background:rgba(201,168,76,.25);color:var(--gold)}
+.sb-rank.r2{background:rgba(255,255,255,.08);color:var(--txm)}
+.sb-rank.r3{background:rgba(184,134,11,.12);color:var(--amberl)}
+.sb-rank.rn{background:transparent;color:var(--txd)}
+.sb-score{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;text-align:center}
+.sb-gross{color:var(--txm)}
+.sb-net{color:var(--tx)}
+.sb-net.under{color:var(--g5)}
+.sb-net.over{color:var(--redp)}
+.sb-net.even{color:var(--tx)}
+.sb-incomplete{font-size:12px;color:var(--txd);font-style:italic;padding:10px 16px}
+
+/* SCOREBOARD CARD */
 .toast{position:fixed;top:calc(var(--safe-t) + 60px);left:50%;transform:translateX(-50%);
   background:var(--purp);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
   padding:10px 18px;border-radius:20px;border:1px solid var(--purpl);
@@ -799,8 +821,6 @@ function adj(hd,pid,delta){
   refreshHoleCard(hd.h);
   // Refresh greenie result if par 3
   if(PAR3S.includes(hd.h))refreshGreenieResult(hd.h);
-  // Check for auto press trigger
-  checkAutoPress(hd.h);
 }
 
 // ── TOAST ──
@@ -810,47 +830,6 @@ function showToast(msg){
   el.textContent=msg;el.classList.add('show');
   if(toastTimer)clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>el.classList.remove('show'),4000);
-}
-
-// ── AUTO PRESS ──
-// Fires when either side hits exactly -2 in a front or back 9 main match
-// Only applies to original front/back matches (not presses, not overall)
-// Key: `auto-${seg}-${matchNum}-${triggerHole}` stored in S.autoPresses to avoid double-firing
-function checkAutoPress(scoredHole){
-  if(!S.autoPresses)S.autoPresses={};
-  const seg=scoredHole<=9?'front':'back';
-  const segHoles=SEGS[seg].holes;
-  // Only check holes within this segment (not last hole — no next hole to press from)
-  if(!segHoles.includes(scoredHole))return;
-  const nextHole=scoredHole+1;
-  if(nextHole>18)return;
-  if(!segHoles.includes(nextHole))return; // don't cross nines
-
-  for(let m=1;m<=3;m++){
-    const key=`${seg}-${m}-${scoredHole}`;
-    if(S.autoPresses[key])continue; // already fired this one
-
-    // Only score holes up to and including scoredHole in this segment
-    const v=segScore(m,segHoles.filter(h=>h<=scoredHole));
-
-    // v < 0 means opp leads (wheel is down), v > 0 means wheel leads (opp is down)
-    if(Math.abs(v)===2){
-      // Check no existing auto press already active for this match+seg starting at or after nextHole
-      const alreadyActive=S.presses.some(p=>
-        p.match===m && p.seg===seg && p.parentId===null && p.startHole>=nextHole && p._auto
-      );
-      if(alreadyActive)continue;
-
-      // Fire the press
-      const pressId=Date.now()+m; // unique enough
-      S.presses.push({id:pressId,match:m,seg,startHole:nextHole,parentId:null,_auto:true});
-      S.autoPresses[key]=true;
-      save();
-
-      const downSide=v<0?'Wheel':'Opps ('+matchLabel(m)+')';
-      showToast(`⚡ Auto press fired — ${downSide} 2 down in M${m} ${seg}. Press starts hole ${nextHole}.`);
-    }
-  }
 }
 
 function refreshHoleCard(hole){
@@ -1010,12 +989,11 @@ function renderPresses(){
     const ps=pressScore(press,18);
     const card=document.createElement('div');card.className='press-card';
     const parentTxt=press.parentId?`Press of P${press.parentId}`:'Original press';
-    const autoBadge=press._auto?'<span style="font-size:10px;background:rgba(107,63,160,.35);color:var(--purpp);padding:2px 7px;border-radius:8px;margin-left:6px;letter-spacing:.04em">AUTO</span>':'';
     const abs=Math.abs(ps);const cls=ps>0?'w':ps<0?'o':'e';
     const txt=ps===0?'Even':(ps>0?`W +${abs}`:`O +${abs}`);
     card.innerHTML=`
       <div class="press-hdr">
-        <div class="press-num">P${idx+1}${autoBadge}</div>
+        <div class="press-num">P${idx+1}</div>
         <div class="press-meta">${matchLabel(press.match)} · ${press.seg} · starts hole ${press.startHole}</div>
         <button class="press-del" onclick="deletePress(${press.id})">×</button>
       </div>
@@ -1135,9 +1113,139 @@ function simplifyDebts(money){
   return txns;
 }
 
+// ── WHEEL SCOREBOARD ──
+function buildWheelScoreboard(){
+  // Gross total per player across all 18 holes
+  // Net total = gross minus strokes received (using each player's course hdcp vs field low)
+  // We use match 1 handicap as the baseline for net (lowest hdcp across all 5 players)
+  const allIds=['W1','W2','A','B','C'];
+  const allHdcps=allIds.map(id=>S.players.find(p=>p.id===id)?.hdcp||0);
+  const minHdcp=Math.min(...allHdcps);
+
+  const data=allIds.map(pid=>{
+    const p=S.players.find(x=>x.id===pid);
+    let gross=0,holesPlayed=0;
+    for(let h=1;h<=18;h++){
+      const g=getScore(h,pid);
+      if(g!==undefined){gross+=g;holesPlayed++;}
+    }
+    const pops=(p?.hdcp||0)-minHdcp;
+    // Net strokes received = count of holes where hdcp rank <= pops
+    let strokesReceived=0;
+    for(let h=1;h<=18;h++){
+      if(HOLES[h-1].hdcp<=pops)strokesReceived++;
+    }
+    const net=holesPlayed>0?gross-strokesReceived:null;
+    return {pid,name:pName(pid),gross:holesPlayed>0?gross:null,net,holesPlayed,pops};
+  });
+
+  // Sort by net (nulls last), then gross
+  data.sort((a,b)=>{
+    if(a.net===null&&b.net===null)return 0;
+    if(a.net===null)return 1;
+    if(b.net===null)return -1;
+    return a.net-b.net;
+  });
+
+  const card=document.createElement('div');card.className='scoreboard';
+  const holesComplete=data.some(d=>d.holesPlayed===18);
+  const maxHoles=Math.max(...data.map(d=>d.holesPlayed));
+  const label=maxHoles===18?'Final scorecard':`Through ${maxHoles} hole${maxHoles!==1?'s':''}`;
+  card.innerHTML=`<div class="scoreboard-hdr">Scoreboard <span class="scoreboard-sub">${label}</span></div>
+    <div class="scoreboard-cols"><div>Player</div><div style="text-align:center">Gross</div><div style="text-align:center">Net</div><div style="text-align:center">+/−</div></div>`;
+
+  const par=HOLES.reduce((a,h)=>a+h.par,0); // 72
+  data.forEach((d,i)=>{
+    const row=document.createElement('div');
+    row.className='scoreboard-row'+(i===0&&d.net!==null?' top':'');
+    const rankCls=i===0?'r1':i===1?'r2':i===2?'r3':'rn';
+    const grossTxt=d.gross!==null?d.gross:'—';
+    const netTxt=d.net!==null?d.net:'—';
+    const diff=d.net!==null?d.net-par:null;
+    const diffTxt=diff===null?'—':diff===0?'E':diff>0?`+${diff}`:String(diff);
+    const diffCls=diff===null?'':diff<0?'under':diff>0?'over':'even';
+    row.innerHTML=`
+      <div class="sb-name"><div class="sb-rank ${rankCls}">${i+1}</div>${d.name}</div>
+      <div class="sb-score sb-gross">${grossTxt}</div>
+      <div class="sb-score sb-net ${diffCls}">${netTxt}</div>
+      <div class="sb-score sb-net ${diffCls}">${diffTxt}</div>`;
+    card.appendChild(row);
+  });
+
+  if(maxHoles===0){
+    const msg=document.createElement('div');msg.className='sb-incomplete';
+    msg.textContent='No scores entered yet';card.appendChild(msg);
+  }
+  return card;
+}
+
+// ── NINE POINT SCOREBOARD ──
+function buildNineScoreboard(){
+  if(!S.ninePlayers.length)return null;
+
+  const allHdcps=S.ninePlayers.map(id=>npHdcp(id));
+  const minHdcp=Math.min(...allHdcps);
+
+  const data=S.ninePlayers.map(pid=>{
+    let gross=0,holesPlayed=0;
+    for(let h=1;h<=18;h++){
+      const g=nineGetScore(h,pid);
+      if(g!==undefined){gross+=g;holesPlayed++;}
+    }
+    const pops=npHdcp(pid)-minHdcp;
+    let strokesReceived=0;
+    for(let h=1;h<=18;h++){
+      if(HOLES[h-1].hdcp<=pops)strokesReceived++;
+    }
+    const net=holesPlayed>0?gross-strokesReceived:null;
+    return {pid,name:npName(pid),gross:holesPlayed>0?gross:null,net,holesPlayed};
+  });
+
+  data.sort((a,b)=>{
+    if(a.net===null&&b.net===null)return 0;
+    if(a.net===null)return 1;
+    if(b.net===null)return -1;
+    return a.net-b.net;
+  });
+
+  const card=document.createElement('div');card.className='scoreboard';
+  card.style.borderColor='rgba(184,134,11,.3)';
+  const maxHoles=Math.max(...data.map(d=>d.holesPlayed),0);
+  const label=maxHoles===18?'Final scorecard':`Through ${maxHoles} hole${maxHoles!==1?'s':''}`;
+  card.innerHTML=`<div class="scoreboard-hdr" style="background:rgba(184,134,11,.08);border-color:rgba(184,134,11,.3)">Scoreboard <span class="scoreboard-sub">${label}</span></div>
+    <div class="scoreboard-cols"><div>Player</div><div style="text-align:center">Gross</div><div style="text-align:center">Net</div><div style="text-align:center">+/−</div></div>`;
+
+  const par=HOLES.reduce((a,h)=>a+h.par,0);
+  data.forEach((d,i)=>{
+    const row=document.createElement('div');
+    row.className='scoreboard-row'+(i===0&&d.net!==null?' top':'');
+    const rankCls=i===0?'r1':i===1?'r2':i===2?'r3':'rn';
+    const grossTxt=d.gross!==null?d.gross:'—';
+    const netTxt=d.net!==null?d.net:'—';
+    const diff=d.net!==null?d.net-par:null;
+    const diffTxt=diff===null?'—':diff===0?'E':diff>0?`+${diff}`:String(diff);
+    const diffCls=diff===null?'':diff<0?'under':diff>0?'over':'even';
+    row.innerHTML=`
+      <div class="sb-name"><div class="sb-rank ${rankCls}">${i+1}</div>${d.name}</div>
+      <div class="sb-score sb-gross">${grossTxt}</div>
+      <div class="sb-score sb-net ${diffCls}">${netTxt}</div>
+      <div class="sb-score sb-net ${diffCls}">${diffTxt}</div>`;
+    card.appendChild(row);
+  });
+
+  if(maxHoles===0){
+    const msg=document.createElement('div');msg.className='sb-incomplete';
+    msg.textContent='No scores entered yet';card.appendChild(msg);
+  }
+  return card;
+}
+
 function renderLedger(){
   const body=document.getElementById('ledger-body');body.innerHTML='';
   const money=calcMoney();
+
+  // ── Scoreboard ──
+  body.appendChild(buildWheelScoreboard());
 
   // ── Per-player net ──
   const mc=document.createElement('div');mc.className='money-card';
@@ -1652,6 +1760,10 @@ function refreshNineGreenieResult(hole){
 function renderNineLedger(){
   const body=document.getElementById('nine-ledger-body');body.innerHTML='';
   if(!S.ninePlayers.length){body.innerHTML='<div style="padding:30px;text-align:center;color:var(--txd)">No 9 Point game set up yet</div>';return;}
+
+  // ── Scoreboard ──
+  const sb=buildNineScoreboard();
+  if(sb)body.appendChild(sb);
 
   const pressCount=Object.values(S.ninePresses||{}).filter(v=>v!==null).length;
   const curRate=1+pressCount;
