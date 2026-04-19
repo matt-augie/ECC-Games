@@ -644,9 +644,9 @@ function initSetup(){
       <input type="date" class="inp" id="d-date-bb" value="${S.date||today}" oninput="S.date=this.value;save()">
       <div class="slabel">Tees</div>
       <div class="tee-wrap" id="tee-wrap-bb"></div>
-      <div class="slabel">Team 1</div>
+      <div class="slabel" id="bb-team1-label">Team 1: ${bbTeamName(1)}</div>
       <div class="card" id="bb-t1-cards"></div>
-      <div class="slabel">Team 2</div>
+      <div class="slabel" id="bb-team2-label">Team 2: ${bbTeamName(2)}</div>
       <div class="card" id="bb-t2-cards"></div>
       <div class="slabel">Format</div>
       <div class="card">
@@ -2168,6 +2168,10 @@ function renderNineLedger(){
 
 // ── Helpers ──
 function bbName(id){return S.bbRoster.find(p=>p.id===id)?.name||id;}
+function bbTeamName(team){
+  const names=S.bbRoster.filter(p=>p.team===team).map(p=>{const n=p.name;return(n&&n!==p.id)?n:'?';});
+  return names.join(' \& ');
+}
 function bbHdcp(id){return S.bbRoster.find(p=>p.id===id)?.hdcp||0;}
 function bbGetScore(h,id){return S.bbScores?.[`${h}-${id}`];}
 function bbSetScore(h,id,v){
@@ -2190,7 +2194,13 @@ function bbPlayerRow(id,notLast){
     </div>`;
   return div;
 }
-function setBBName(id,v){const p=S.bbRoster.find(x=>x.id===id);if(p){p.name=v||id;save();}}
+function setBBName(id,v){const p=S.bbRoster.find(x=>x.id===id);if(p){p.name=v||id;save();refreshBBTeamLabels();}}
+function refreshBBTeamLabels(){
+  const t1el=document.getElementById('bb-team1-label');
+  const t2el=document.getElementById('bb-team2-label');
+  if(t1el)t1el.textContent='Team 1: '+bbTeamName(1);
+  if(t2el)t2el.textContent='Team 2: '+bbTeamName(2);
+}
 function setBBHdcp(id,v){const p=S.bbRoster.find(x=>x.id===id);if(p){p.hdcp=isNaN(v)?0:v;save();}}
 function startBBRound(){S.date=document.getElementById('d-date-bb')?.value||S.date;S.bbNine='front';save();go('bb');}
 
@@ -2320,15 +2330,15 @@ function renderBBMatchStatusBar(){
   const bar=document.getElementById('bb-match-status-bar');
   if(!bar)return;
   bar.innerHTML='';
-  const t1names=S.bbRoster.filter(p=>p.team===1).map(p=>bbName(p.id)).join(' + ');
-  const t2names=S.bbRoster.filter(p=>p.team===2).map(p=>bbName(p.id)).join(' + ');
+  const t1names=bbTeamName(1);
+  const t2names=bbTeamName(2);
   const grid=document.createElement('div');
   grid.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px';
   [{key:'front',lbl:'F9'},{key:'back',lbl:'B9'},{key:'overall',lbl:'18'}].forEach(sg=>{
     const v=bbSegScore(SEGS[sg.key].holes);
     const cls=v>0?'w':v<0?'o':'e';
     const abs=Math.abs(v);
-    const txt=v===0?'Even':v>0?`T1 +${abs}`:`T2 +${abs}`;
+    const txt=v===0?'Even':v>0?`${bbTeamName(1)} +${abs}`:`${bbTeamName(2)} +${abs}`;
     const cell=document.createElement('div');
     cell.className='msbar-cell';
     cell.innerHTML=`<div class="msbar-match">${sg.lbl}</div>
@@ -2342,8 +2352,8 @@ function renderBBMatchStatusBar(){
 function renderBBScore(){
   if(!S.bbRoster||!S.bbRoster.length)return;
   const tee=TEES.find(t=>t.name===S.tee)||TEES[0];
-  const t1=S.bbRoster.filter(p=>p.team===1).map(p=>bbName(p.id)).join(' & ');
-  const t2=S.bbRoster.filter(p=>p.team===2).map(p=>bbName(p.id)).join(' & ');
+  const t1=bbTeamName(1);
+  const t2=bbTeamName(2);
   document.getElementById('bb-round-meta').textContent=`${S.date||'Today'} · ${tee.name}`;
   const body=document.getElementById('bb-body');body.innerHTML='';
   const hset=S.bbNine==='front'?HOLES.slice(0,9):HOLES.slice(9,18);
@@ -2376,7 +2386,7 @@ function buildBBHoleCard(hd){
     <div class="hmscore">
       ${[{v:runFront,l:'F9'},{v:runBack,l:'B9'},{v:runAll,l:'18'}].map(({v,l})=>{
         const cls=v>0?'ms-w':v<0?'ms-o':'ms-e';
-        const txt=v===0?`${l} E`:v>0?`${l} T1+${Math.abs(v)}`:`${l} T2+${Math.abs(v)}`;
+        const txt=v===0?`${l} E`:v>0?`${l} ${bbTeamName(1)}+${Math.abs(v)}`:`${l} ${bbTeamName(2)}+${Math.abs(v)}`;
         return `<div class="ms-pill ${cls}">${txt}</div>`;
       }).join('')}
     </div>
@@ -2392,7 +2402,7 @@ function buildBBHoleCard(hd){
     const grp=document.createElement('div');grp.className='sg-group';
     const lbl=document.createElement('div');lbl.className='sg-lbl';
     const best=bbTeamBest(hd.h,team);
-    lbl.innerHTML=`Team ${team} <span style="font-family:DM Mono,monospace;font-size:11px;color:${team===1?'var(--navyp)':'var(--purpp)'}">${best!==undefined?'Best: '+best:''}</span>`;
+    lbl.innerHTML=`${bbTeamName(team)} <span style="font-family:DM Mono,monospace;font-size:11px;color:${team===1?'var(--navyp)':'var(--purpp)'}">${best!==undefined?'Best: '+best:''}</span>`;
     grp.appendChild(lbl);
     const players=document.createElement('div');players.className='sg-players';
     S.bbRoster.filter(p=>p.team===team).forEach(p=>players.appendChild(buildBBScoreRow(hd,p.id)));
@@ -2404,7 +2414,7 @@ function buildBBHoleCard(hd){
   const mr=document.createElement('div');mr.className='mresult-row';
   const res=bbHoleResult(hd.h);
   const resCl=res===undefined?'e':res>0?'w':res<0?'o':'e';
-  const resTx=res===undefined?'—':res===0?'Halved':res>0?'T1 wins':'T2 wins';
+  const resTx=res===undefined?'—':res===0?'Halved':res>0?bbTeamName(1)+' wins':bbTeamName(2)+' wins';
   mr.innerHTML=`<div class="mres" style="flex:1"><div class="mres-lbl">Hole result</div><div class="mres-val ${resCl}">${resTx}</div></div>`;
 
   body.append(grid,mr);
@@ -2474,7 +2484,7 @@ function refreshBBHoleCard(hole){
       const lbl=grp.querySelector('.sg-lbl');
       if(lbl){
         const best=bbTeamBest(hole,team);
-        lbl.innerHTML=`Team ${team} <span style="font-family:DM Mono,monospace;font-size:11px;color:${team===1?'var(--navyp)':'var(--purpp)'}">${best!==undefined?'Best: '+best:''}</span>`;
+        lbl.innerHTML=`${bbTeamName(team)} <span style="font-family:DM Mono,monospace;font-size:11px;color:${team===1?'var(--navyp)':'var(--purpp)'}">${best!==undefined?'Best: '+best:''}</span>`;
       }
     }
   });
@@ -2483,7 +2493,7 @@ function refreshBBHoleCard(hole){
   if(mr){
     const res=bbHoleResult(hole);
     const resCl=res===undefined?'e':res>0?'w':res<0?'o':'e';
-    const resTx=res===undefined?'—':res===0?'Halved':res>0?'T1 wins':'T2 wins';
+    const resTx=res===undefined?'—':res===0?'Halved':res>0?bbTeamName(1)+' wins':bbTeamName(2)+' wins';
     mr.innerHTML=`<div class="mres" style="flex:1"><div class="mres-lbl">Hole result</div><div class="mres-val ${resCl}">${resTx}</div></div>`;
   }
   // Refresh header pills
@@ -2494,7 +2504,7 @@ function refreshBBHoleCard(hole){
     const runAll=bbSegScore(SEGS.overall.holes.filter(x=>x<=hole));
     hdrPills.innerHTML=[{v:runFront,l:'F9'},{v:runBack,l:'B9'},{v:runAll,l:'18'}].map(({v,l})=>{
       const cls=v>0?'ms-w':v<0?'ms-o':'ms-e';
-      const txt=v===0?`${l} E`:v>0?`${l} T1+${Math.abs(v)}`:`${l} T2+${Math.abs(v)}`;
+      const txt=v===0?`${l} E`:v>0?`${l} ${bbTeamName(1)}+${Math.abs(v)}`:`${l} ${bbTeamName(2)}+${Math.abs(v)}`;
       return `<div class="ms-pill ${cls}">${txt}</div>`;
     }).join('');
   }
@@ -2653,7 +2663,7 @@ function renderBBPresses(){
   S.bbPresses.forEach((press,idx)=>{
     const ps=bbPressScore(press,18);
     const abs=Math.abs(ps);const cls=ps>0?'w':ps<0?'o':'e';
-    const txt=ps===0?'Even':ps>0?`T1 +${abs}`:`T2 +${abs}`;
+    const txt=ps===0?'Even':ps>0?`${bbTeamName(1)} +${abs}`:`${bbTeamName(2)} +${abs}`;
     const card=document.createElement('div');card.className='press-card';
     card.innerHTML=`
       <div class="press-hdr">
@@ -2684,8 +2694,8 @@ function deleteBBPress(id){S.bbPresses=S.bbPresses.filter(p=>p.id!==id);save();r
 function renderBBLedger(){
   const body=document.getElementById('bb-ledger-body');body.innerHTML='';
   const money=bbCalcMoney();
-  const t1names=S.bbRoster.filter(p=>p.team===1).map(p=>bbName(p.id)).join(' & ');
-  const t2names=S.bbRoster.filter(p=>p.team===2).map(p=>bbName(p.id)).join(' & ');
+  const t1names=bbTeamName(1);
+  const t2names=bbTeamName(2);
 
   // Scoreboard
   const allIds=['T1A','T1B','T2A','T2B'];
@@ -2780,7 +2790,7 @@ function renderBBLedger(){
     S.bbPresses.forEach((press,i)=>{
       const ps=bbPressScore(press,18);const abs=Math.abs(ps);
       const cls=ps>0?'color:var(--navyp)':ps<0?'color:var(--purpp)':'color:var(--txm)';
-      const txt=ps===0?'Halved':ps>0?`T1 +${abs}`:`T2 +${abs}`;
+      const txt=ps===0?'Halved':ps>0?`${bbTeamName(1)} +${abs}`:`${bbTeamName(2)} +${abs}`;
       const pr=document.createElement('div');pr.style.cssText='display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:3px';
       pr.innerHTML=`<span style="color:var(--txm)">P${i+1} ${press.seg} h${press.startHole}</span><span style="${cls}">${txt}</span>`;
       pd.appendChild(pr);
