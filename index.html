@@ -348,6 +348,7 @@ select option{background:#122b17}
     <div><div class="hdr-title">Scorecard</div><div class="hdr-sub" id="round-meta"></div></div>
     <div class="hdr-actions">
       <button class="hbtn ghost" onclick="go('presses')">Presses</button>
+      <button class="hbtn" style="border-color:rgba(192,57,43,.4);background:rgba(192,57,43,.1);color:var(--redp)" onclick="confirmFinish('wheel')">Finish</button>
     </div>
   </div>
   <div style="background:var(--g2);border-bottom:1px solid var(--bd);padding:8px 14px;flex-shrink:0;display:flex;gap:6px" id="nine-tabs">
@@ -397,7 +398,10 @@ select option{background:#122b17}
   <div class="hdr">
     <button class="back" onclick="go('nine-setup')">‹</button>
     <div><div class="hdr-title" style="color:var(--amberl)">9 Point Game</div><div class="hdr-sub" id="nine-meta"></div></div>
-    <div class="hdr-actions"><button class="hbtn" style="border-color:rgba(184,134,11,.4);background:rgba(184,134,11,.1);color:var(--amberl)" onclick="go('nine-ledger')">Money</button></div>
+    <div class="hdr-actions">
+      <button class="hbtn" style="border-color:rgba(184,134,11,.4);background:rgba(184,134,11,.1);color:var(--amberl)" onclick="go('nine-ledger')">Money</button>
+      <button class="hbtn" style="border-color:rgba(192,57,43,.4);background:rgba(192,57,43,.1);color:var(--redp)" onclick="confirmFinish('nine')">Finish</button>
+    </div>
   </div>
   <div style="background:var(--g2);border-bottom:1px solid var(--bd);padding:8px 14px;flex-shrink:0;display:flex;gap:6px">
     <button id="ntab-front" onclick="showNineNine('front')" style="flex:1;padding:7px;border-radius:8px;border:1px solid var(--amberl);background:rgba(184,134,11,.15);color:var(--amberl);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Front 9</button>
@@ -432,6 +436,7 @@ select option{background:#122b17}
     <div><div class="hdr-title" style="color:var(--navyp)">Best Ball</div><div class="hdr-sub" id="bb-round-meta"></div></div>
     <div class="hdr-actions">
       <button class="hbtn" style="border-color:rgba(46,109,164,.4);background:rgba(46,109,164,.1);color:var(--navyp)" onclick="go('bb-presses')">Presses</button>
+      <button class="hbtn" style="border-color:rgba(192,57,43,.4);background:rgba(192,57,43,.1);color:var(--redp)" onclick="confirmFinish('bb')">Finish</button>
     </div>
   </div>
   <div id="bb-match-status-bar" style="background:var(--g0);border-bottom:1px solid rgba(46,109,164,.2);padding:6px 10px;flex-shrink:0"></div>
@@ -503,6 +508,18 @@ select option{background:#122b17}
     <div class="modal-btns">
       <button class="mcancel" onclick="closePressModal()">Cancel</button>
       <button class="mconfirm" onclick="confirmPress()">Add Press</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FINISH CONFIRMATION MODAL ══ -->
+<div class="modal" id="finish-modal">
+  <div class="modal-sheet">
+    <div class="modal-title" style="color:var(--redp)">Finish Round?</div>
+    <div style="font-size:14px;color:var(--txm);margin-bottom:20px;line-height:1.6">This will clear all scores, presses, and greenies for this game and return to the main menu. This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="mcancel" onclick="closeFinishModal()">Cancel</button>
+      <button class="mconfirm" style="background:var(--red)" onclick="finishRound()" id="finish-confirm-btn">Finish Round</button>
     </div>
   </div>
 </div>
@@ -2799,6 +2816,43 @@ function renderBBLedger(){
   }
   body.appendChild(sc);
   const spacer=document.createElement('div');spacer.style.height='20px';body.appendChild(spacer);
+}
+
+// ══════════════════════════════════════════
+// FINISH ROUND
+// ══════════════════════════════════════════
+let _finishMode=null;
+function confirmFinish(mode){
+  _finishMode=mode;
+  document.getElementById('finish-modal').classList.add('on');
+}
+function closeFinishModal(){
+  document.getElementById('finish-modal').classList.remove('on');
+  _finishMode=null;
+}
+function finishRound(){
+  if(_finishMode==='wheel'){
+    S.scores={};S.greenies={};S.presses=[];S.nine='front';
+    // Reset player names/hdcps
+    S.players=[
+      {id:'W1',role:'wheel',name:'W1',hdcp:0},{id:'W2',role:'wheel',name:'W2',hdcp:0},
+      {id:'A',role:'opp',name:'A',hdcp:0},{id:'B',role:'opp',name:'B',hdcp:0},{id:'C',role:'opp',name:'C',hdcp:0},
+    ];
+  } else if(_finishMode==='nine'){
+    S.nineScores={};S.nineGreenies={};S.ninePresses={};S.nineNine='front';
+    S.nineRoster=[{id:'P1',name:'',hdcp:0},{id:'P2',name:'',hdcp:0},{id:'P3',name:'',hdcp:0}];
+  } else if(_finishMode==='bb'){
+    S.bbScores={};S.bbGreenies={};S.bbPresses=[];S.bbNine='front';
+    S.bbRoster=[
+      {id:'T1A',team:1,name:'T1A',hdcp:0},{id:'T1B',team:1,name:'T1B',hdcp:0},
+      {id:'T2A',team:2,name:'T2A',hdcp:0},{id:'T2B',team:2,name:'T2B',hdcp:0},
+    ];
+  }
+  save();
+  closeFinishModal();
+  S.mode=_finishMode==='wheel'?'wheel':_finishMode==='nine'?'nine':'bb';
+  go('setup');
+  initSetup();
 }
 
 initSetup();
