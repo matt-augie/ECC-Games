@@ -903,6 +903,45 @@ function renderNineStatusBar(){
   bar.appendChild(grid);
 }
 
+function buildNineGrossBar(nine){
+  const holes=(nine==='front'?HOLES.slice(0,9):HOLES.slice(9,18));
+  const holeNums=holes.map(h=>h.h);
+  const par=holes.reduce((a,h)=>a+h.par,0);
+  const bar=document.createElement('div');
+  bar.style.cssText='background:var(--g2);border:1px solid rgba(184,134,11,.3);border-radius:var(--cr);overflow:hidden;margin-bottom:8px';
+  const hdr=document.createElement('div');
+  hdr.style.cssText='padding:8px 14px;background:rgba(184,134,11,.08);border-bottom:1px solid rgba(184,134,11,.2);font-family:DM Serif Display,serif;font-size:14px;color:var(--amberl);display:flex;align-items:center;justify-content:space-between';
+  hdr.innerHTML=`<span>${nine==='front'?'Front 9':'Back 9'} Gross Scores</span><span style="font-family:DM Mono,monospace;font-size:12px;color:var(--txm)">Par ${par}</span>`;
+  bar.appendChild(hdr);
+  let anyScores=false;
+  S.ninePlayers.forEach(pid=>{
+    const scores=holeNums.map(h=>nineGetScore(h,pid));
+    const played=scores.filter(s=>s!==undefined);
+    if(!played.length)return;
+    anyScores=true;
+    const gross=played.reduce((a,b)=>a+b,0);
+    const diff=played.length===holeNums.length?gross-par:null;
+    const diffTxt=diff===null?`(${played.length}/9)`:diff===0?'E':diff>0?`+${diff}`:String(diff);
+    const diffCls=diff===null?'color:var(--txd)':diff<0?'color:var(--g5)':diff>0?'color:var(--redp)':'color:var(--tx)';
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(184,134,11,.1)';
+    row.innerHTML=`
+      <span style="font-size:13px;font-weight:500;color:var(--tx)">${npName(pid)}</span>
+      <div style="display:flex;align-items:baseline;gap:10px">
+        <span style="font-family:DM Mono,monospace;font-size:20px;font-weight:600;color:var(--tx)">${gross}</span>
+        <span style="font-family:DM Mono,monospace;font-size:13px;${diffCls}">${diffTxt}</span>
+      </div>`;
+    bar.appendChild(row);
+  });
+  if(!anyScores){
+    const empty=document.createElement('div');
+    empty.style.cssText='padding:12px 14px;font-size:13px;color:var(--txd);font-style:italic';
+    empty.textContent='No scores entered yet';
+    bar.appendChild(empty);
+  }
+  return bar;
+}
+
 function buildNineSummaryBar(){
   const totPts=nineRunningPoints(18);
   const totDollars=nineRunningDollars(18);
@@ -1848,6 +1887,7 @@ function renderNineGame(){
   body.innerHTML='';
   const hset=S.nineNine==='front'?HOLES.slice(0,9):HOLES.slice(9,18);
   hset.forEach(hd=>body.appendChild(buildNineHoleCard(hd)));
+  const ngb=buildNineGrossBar(S.nineNine);ngb.id="nine-gross-bar";body.appendChild(ngb);
   const nsb=buildNineSummaryBar();body.appendChild(nsb);
   renderNineStatusBar();
 }
@@ -2013,6 +2053,8 @@ function refreshNineHoleCard(hole){
   if(PAR3S.includes(hole))refreshNineGreenieResult(hole);
   // Refresh status bar and summary bar
   renderNineStatusBar();
+  const oldg=document.getElementById('nine-gross-bar');
+  if(oldg){const ng=buildNineGrossBar(S.nineNine);ng.id='nine-gross-bar';oldg.replaceWith(ng);}
   const old=document.getElementById('nine-summary-bar');
   if(old){const nb=buildNineSummaryBar();old.replaceWith(nb);}
 }
