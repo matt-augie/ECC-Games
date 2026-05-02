@@ -529,16 +529,16 @@ select option{background:#122b17}
 // DATA
 // ══════════════════════════════════════════
 const HOLES=[
-  {h:1,par:4,hdcp:2},{h:2,par:4,hdcp:6},{h:3,par:4,hdcp:12},
-  {h:4,par:3,hdcp:18},{h:5,par:4,hdcp:4},{h:6,par:4,hdcp:10},
-  {h:7,par:3,hdcp:14},{h:8,par:5,hdcp:8},{h:9,par:4,hdcp:16},
-  {h:10,par:5,hdcp:5},{h:11,par:3,hdcp:15},{h:12,par:5,hdcp:7},
-  {h:13,par:5,hdcp:13},{h:14,par:4,hdcp:11},{h:15,par:4,hdcp:9},
+  {h:1,par:4,hdcp:4},{h:2,par:4,hdcp:8},{h:3,par:4,hdcp:14},
+  {h:4,par:3,hdcp:18},{h:5,par:4,hdcp:6},{h:6,par:4,hdcp:2},
+  {h:7,par:3,hdcp:12},{h:8,par:5,hdcp:10},{h:9,par:4,hdcp:16},
+  {h:10,par:5,hdcp:5},{h:11,par:3,hdcp:15},{h:12,par:5,hdcp:9},
+  {h:13,par:5,hdcp:13},{h:14,par:4,hdcp:11},{h:15,par:4,hdcp:7},
   {h:16,par:4,hdcp:1},{h:17,par:3,hdcp:17},{h:18,par:4,hdcp:3},
 ];
 const PAR3S=[4,7,11,17];
 const TEES=[
-  {name:'Gold',color:'#c8a81b',yards:6696,rating:72.3,slope:136},
+  {name:'Gold',color:'#c8a81b',yards:6810,rating:72.8,slope:136},
   {name:'Blue',color:'#2166c0',yards:6394,rating:70.9,slope:133},
   {name:'Green',color:'#2d8c45',yards:5859,rating:68.5,slope:128},
   {name:'White',color:'#aaaaaa',yards:5527,rating:66.8,slope:124},
@@ -1769,18 +1769,28 @@ function nineRateAtHole(hole){
 
 // Running dollar totals through hole
 function nineRunningDollars(throughHole){
+  // Pairwise settlement: each player settles directly vs every other player
+  // based on cumulative point difference × rate per hole
+  const totalPts={};S.ninePlayers.forEach(id=>totalPts[id]=0);
+  // Accumulate points per hole (respecting rate changes per hole)
+  // We settle pairwise on cumulative totals at end, but rate applies per hole
+  // So track hole-by-hole pairwise dollar swings
   const dollars={};S.ninePlayers.forEach(id=>dollars[id]=0);
   for(let h=1;h<=throughHole;h++){
     const pts=ninePointsForHole(h);
     if(!pts)continue;
     const rate=nineRateAtHole(h);
-    // Distribute: avg = 3 pts, each player's dollar swing = (pts - 3) * rate
-    // But we settle pairwise: net from mean
-    // Total = 9pts, avg = 3. Each player gets (pts[id]-3)*rate vs avg
-    S.ninePlayers.forEach(id=>{
-      const p=pts[id]||0;
-      dollars[id]+=(p-3)*rate;
-    });
+    // Pairwise: for each pair, winner collects point diff × rate from loser
+    const ids=S.ninePlayers;
+    for(let i=0;i<ids.length;i++){
+      for(let j=i+1;j<ids.length;j++){
+        const pi=pts[ids[i]]||0;
+        const pj=pts[ids[j]]||0;
+        const diff=(pi-pj)*rate;
+        dollars[ids[i]]+=diff;
+        dollars[ids[j]]-=diff;
+      }
+    }
   }
   return dollars;
 }
