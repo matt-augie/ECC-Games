@@ -22,6 +22,44 @@
   --bd:rgba(255,255,255,0.07);--bdg:rgba(201,168,76,0.25);
   --cr:12px;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
 }
+/* LIGHT MODE */
+html.light{
+  --g0:#f0f4f1;--g1:#e8efe9;--g2:#ffffff;--g3:#d4e6d8;--g4:#2d7a3a;--g5:#1e6b2a;--gp:#2d6e3a;
+  --gold:#8a6a1a;--goldl:#6b4f0f;--goldp:#4a3508;
+  --navy:#1a3a5c;--navyl:#1a3a5c;--navyp:#0d2540;
+  --red:#c0392b;--redl:#a93226;--redp:#8b1a10;
+  --purp:#6b3fa0;--purpl:#5a2d8f;--purpp:#3d1a6e;
+  --amber:#8a6a00;--amberl:#6b4f00;--amberp:#4a3500;
+  --tx:#1a2e1d;--txm:#3d5c42;--txd:#5a7a5f;
+  --bd:rgba(0,0,0,0.1);--bdg:rgba(139,106,26,0.3);
+}
+html.light body{background:var(--g1)}
+html.light .scr{background:var(--g1)}
+html.light .hdr{background:var(--g2);border-bottom:1px solid var(--bdg)}
+html.light .bnav{background:var(--g2);border-top:1px solid var(--bd)}
+html.light .card{background:var(--g2)}
+html.light .body{background:var(--g1)}
+html.light .inp{background:rgba(0,0,0,.04);border-color:var(--bd);color:var(--tx)}
+html.light .inp:focus{border-color:var(--gold)}
+html.light .msel,.html.light .minp{background:rgba(0,0,0,.04);color:var(--tx)}
+html.light .modal-sheet{background:var(--g2)}
+html.light .sbtn{background:rgba(0,0,0,.06);border-color:var(--bd);color:var(--tx)}
+html.light .srow{background:rgba(0,0,0,.03)}
+html.light .hcard{background:var(--g2)}
+html.light .hbody{background:var(--g2)}
+html.light .nine-pt-hole{background:var(--g2)}
+html.light .nph-body{background:var(--g2)}
+html.light .press-card{background:var(--g2)}
+html.light .pinfo{background:rgba(0,0,0,.04)}
+html.light .money-card{background:var(--g2)}
+html.light .owes-card{background:var(--g2)}
+html.light .scoreboard{background:var(--g2)}
+html.light .ledger-match{background:var(--g2)}
+html.light .msbar-cell{background:var(--g2)}
+html.light select option{background:#ffffff;color:var(--tx)}
+html.light .toast{background:var(--purp)}
+html.light #match-status-bar,html.light #bb-match-status-bar,html.light #nine-status-bar{background:var(--g0)}
+
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--g1);color:var(--tx);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 body{display:flex;flex-direction:column;padding-top:var(--safe-t);padding-bottom:var(--safe-b);min-height:100dvh}
@@ -336,7 +374,7 @@ select option{background:#122b17}
 <div id="s-setup" class="scr on">
   <div class="hdr">
     <div><div class="hdr-title">The Wheel</div><div class="hdr-sub">Edina Country Club</div></div>
-    <div class="hdr-actions"><button class="hbtn" onclick="startRound()">Start Round →</button></div>
+    <div class="hdr-actions"><button id="theme-toggle" class="hbtn ghost" onclick="toggleTheme()" style="font-size:16px;padding:6px 10px">🌙</button><button class="hbtn" onclick="startRound()">Start Round →</button></div>
   </div>
   <div class="body" id="setup-body"></div>
 </div>
@@ -2906,6 +2944,30 @@ function finishRound(){
   go('setup');
   initSetup();
 }
+
+// ══════════════════════════════════════════
+// THEME
+// ══════════════════════════════════════════
+function applyTheme(theme){
+  if(theme==='light'){
+    document.documentElement.classList.add('light');
+    document.querySelector('meta[name="theme-color"]').content='#e8efe9';
+  } else {
+    document.documentElement.classList.remove('light');
+    document.querySelector('meta[name="theme-color"]').content='#0a1f0f';
+  }
+  const btn=document.getElementById('theme-toggle');
+  if(btn)btn.textContent=theme==='light'?'🌙':'☀️';
+  try{localStorage.setItem('wheel-theme',theme);}catch(e){}
+}
+function toggleTheme(){
+  const isLight=document.documentElement.classList.contains('light');
+  applyTheme(isLight?'dark':'light');
+}
+// Load saved theme
+(function(){
+  try{const t=localStorage.getItem('wheel-theme');if(t)applyTheme(t);}catch(e){}
+})();
 
 initSetup();
 if('serviceWorker' in navigator){
