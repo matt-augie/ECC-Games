@@ -1682,11 +1682,13 @@ function renderLedger(){
     for(let m=1;m<=3;m++){
       const r=segResult(m,seg);
       const wids=MATCHES[m].wheel;const oids=MATCHES[m].opp;
+      const wNames=wids.map(id=>pName(id)).join(' & ');
+      const oNames=oids.map(id=>pName(id)).join(' & ');
       const cls=r>0?'color:var(--g5)':r<0?'color:var(--redp)':'color:var(--txm)';
-      const txt=r===0?'Halved':(r>0?`Wheel wins (${wids.join('+')} def. ${oids.join('+')})`:`Opps win (${oids.join('+')} def. ${wids.join('+')})`);
+      const txt=r===0?'Halved':(r>0?`${wNames} def. ${oNames}`:`${oNames} def. ${wNames}`);
       const mrow=document.createElement('div');
-      mrow.style.cssText='display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:4px';
-      mrow.innerHTML=`<span style="color:var(--txm)">M${m}</span><span style="${cls}">${txt}</span>`;
+      mrow.style.cssText='display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:4px;gap:8px';
+      mrow.innerHTML=`<span style="color:var(--txm);flex-shrink:0">Match ${m}</span><span style="${cls};text-align:right">${txt}</span>`;
       segDiv.appendChild(mrow);
     }
     sc.appendChild(segDiv);
@@ -1697,10 +1699,16 @@ function renderLedger(){
     pd.innerHTML=`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--purpp);margin-bottom:4px">Presses (${S.presses.length})</div>`;
     S.presses.forEach((press,i)=>{
       const ps=pressScore(press,18);const abs=Math.abs(ps);
+      const wids=MATCHES[press.match].wheel;const oids=MATCHES[press.match].opp;
+      const wNames=wids.map(id=>pName(id)).join(' & ');
+      const oNames=oids.map(id=>pName(id)).join(' & ');
+      const segLabel=press.seg==='front'?'Front':press.seg==='back'?'Back':'Overall';
       const cls=ps>0?'color:var(--g5)':ps<0?'color:var(--redp)':'color:var(--txm)';
-      const txt=ps===0?'Halved':(ps>0?`W +${abs}`:`O +${abs}`);
-      const pr=document.createElement('div');pr.style.cssText='display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:3px';
-      pr.innerHTML=`<span style="color:var(--txm)">P${i+1} M${press.match} ${press.seg} h${press.startHole}</span><span style="${cls}">${txt}</span>`;
+      const winner=ps>0?wNames:ps<0?oNames:null;
+      const loser=ps>0?oNames:ps<0?wNames:null;
+      const txt=ps===0?'Halved':`${winner} def. ${loser} +${abs}`;
+      const pr=document.createElement('div');pr.style.cssText='display:flex;flex-direction:column;font-size:12px;margin-bottom:8px;gap:2px';
+      pr.innerHTML=`<span style="color:var(--txm)">Press ${i+1} — Press on Hole ${press.startHole}</span><span style="${cls}">${txt}</span>`;
       pd.appendChild(pr);
     });
     sc.appendChild(pd);
